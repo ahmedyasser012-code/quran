@@ -3653,11 +3653,12 @@
 
         
         // ======================== 18. AUTOMATIC ATHKAR SCHEDULER SYSTEM ========================
+        // Full Standalone Recorded MP3 Audio Tracks (Always starts from the very beginning 00:00)
         const ATHKAR_AUDIO_URLS = {
-            sabah: "https://backup.qurango.net/radio/athkar_sabah",
-            masaa: "https://backup.qurango.net/radio/athkar_masa",
-            fallback_sabah: "https://raw.githubusercontent.com/YousefAsalya/Islamic-Pro-azkar-API/main/audio/27.mp3",
-            fallback_masaa: "https://raw.githubusercontent.com/YousefAsalya/Islamic-Pro-azkar-API/main/audio/28.mp3"
+            sabah: "./sabah.mp3",
+            masaa: "./masaa.mp3",
+            fallback_sabah: "https://archive.org/download/adkar_sabah_masae_safar/adkar_assbah.mp3",
+            fallback_masaa: "https://archive.org/download/adkar_sabah_masae_safar/adkar_lmasaa.mp3"
         };
 
         let isAthkarSabahEnabled = true;
@@ -3771,6 +3772,7 @@
                 const fallbackUrl = (type === 'sabah') ? ATHKAR_AUDIO_URLS.fallback_sabah : ATHKAR_AUDIO_URLS.fallback_masaa;
 
                 player.src = primaryUrl;
+                try { player.currentTime = 0; } catch(e) {}
                 player.onerror = function() {
                     if (player.src !== fallbackUrl) {
                         player.src = fallbackUrl;
