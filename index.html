@@ -583,7 +583,7 @@
         /* ---------------- TAB 1: LIVE RADIOS (8 LUXURY CHANNELS) ---------------- */
         .radios-grid {
             display: grid;
-            grid-template-columns: repeat(4, 1fr);
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
             gap: 16px;
             width: 100%;
             max-width: 1250px;
@@ -1384,6 +1384,160 @@
             color: #000;
             transform: scale(1.05);
         }
+    
+        /* Network Online / Offline Status Indicator */
+        .network-status-pill {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: var(--card-glass);
+            border: 1px solid var(--card-border);
+            padding: 5px 12px;
+            border-radius: 30px;
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: var(--text-pure);
+            transition: all 0.3s ease;
+        }
+        .network-status-pill .net-status-dot {
+            width: 9px;
+            height: 9px;
+            border-radius: 50%;
+            background: var(--emerald);
+            box-shadow: 0 0 10px var(--emerald);
+            display: inline-block;
+        }
+        .network-status-pill.offline {
+            border-color: rgba(245, 158, 11, 0.5);
+            background: rgba(245, 158, 11, 0.12);
+            color: #fde68a;
+        }
+        .network-status-pill.offline .net-status-dot {
+            background: #f59e0b;
+            box-shadow: 0 0 10px #f59e0b;
+        }
+
+        /* Salawat Floating Toast Overlay */
+        .salawat-toast-overlay {
+            position: fixed;
+            top: 75px;
+            left: 50%;
+            transform: translateX(-50%) translateY(-40px);
+            background: rgba(10, 22, 38, 0.96);
+            border: 2px solid var(--gold);
+            border-radius: 24px;
+            padding: 16px 40px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8), 0 0 35px var(--gold-deep);
+            z-index: 9999;
+            opacity: 0;
+            pointer-events: none;
+            transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+            backdrop-filter: blur(15px);
+            text-align: center;
+        }
+        .salawat-toast-overlay.show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+        .salawat-badge {
+            background: linear-gradient(135deg, rgba(212, 175, 55, 0.3), rgba(212, 175, 55, 0.1));
+            border: 1px solid var(--gold);
+            color: var(--gold);
+            padding: 4px 18px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 800;
+            letter-spacing: 0.5px;
+        }
+        .salawat-title {
+            font-family: 'Amiri', serif;
+            font-size: 2rem;
+            font-weight: 700;
+            color: #ffffff;
+            text-shadow: 0 2px 12px rgba(212, 175, 55, 0.6);
+            line-height: 1.3;
+        }
+        .salawat-verse {
+            font-family: 'Amiri', serif;
+            font-size: 1.1rem;
+            color: #e2e8f0;
+            font-style: italic;
+        }
+
+        /* Salawat Settings Interactive Row */
+        .salawat-controls-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--card-border);
+            border-radius: 14px;
+            padding: 14px 20px;
+            margin-top: 10px;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+        .salawat-freq-picker {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .freq-picker-label {
+            font-size: 0.95rem;
+            color: var(--text-muted);
+            font-weight: 700;
+        }
+        .btn-freq-pill {
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid var(--card-border);
+            color: var(--text-pure);
+            padding: 8px 16px;
+            border-radius: 30px;
+            font-family: inherit;
+            font-size: 0.9rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            outline: none;
+        }
+        .btn-freq-pill:hover, .btn-freq-pill:focus {
+            border-color: var(--gold);
+            background: rgba(212, 175, 55, 0.2);
+            transform: scale(1.05);
+        }
+        .btn-freq-pill.active-pill {
+            background: linear-gradient(135deg, var(--gold-deep), var(--gold));
+            border-color: var(--gold);
+            color: #000;
+            box-shadow: 0 0 15px rgba(212, 175, 55, 0.5);
+        }
+        .btn-test-salawat {
+            background: linear-gradient(135deg, rgba(56, 189, 248, 0.2), rgba(56, 189, 248, 0.1));
+            border: 1px solid var(--accent-primary);
+            color: var(--text-pure);
+            padding: 9px 20px;
+            border-radius: 30px;
+            font-family: inherit;
+            font-size: 0.95rem;
+            font-weight: 700;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s ease;
+            outline: none;
+        }
+        .btn-test-salawat:hover, .btn-test-salawat:focus {
+            background: var(--accent-primary);
+            color: #000;
+            transform: scale(1.05);
+        }
+
     </style>
 </head>
 <body>
@@ -1396,6 +1550,13 @@
         <span id="toastText">إشعار</span>
     </div>
 
+    <!-- Floating Salawat on the Prophet Reminder Overlay -->
+    <div class="salawat-toast-overlay" id="salawatToastOverlay">
+        <div class="salawat-badge">ﷺ تذكير بالصلاة على النبي ﷺ</div>
+        <div class="salawat-title">اللَّهُمَّ صَلِّ وَسَلِّمْ وَبَارِكْ عَلَى نَبِيِّنَا مُحَمَّدٍ</div>
+        <div class="salawat-verse">﴿إِنَّ اللَّهَ وَمَلَائِكَتَهُ يُصَلُّونَ عَلَى النَّبِيِّ يَا أَيُّهَا الَّذِينَ آمَنُوا صَلُّوا عَلَيْهِ وَسَلِّمُوا تَسْلِيمًا﴾</div>
+    </div>
+
     <div class="app-container">
         <!-- HEADER -->
         <header>
@@ -1403,6 +1564,10 @@
                 <div class="winter-badge">
                     <svg viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
                     <span class="winter-title" id="locationTitle">جمهورية مصر العربية - القاهرة ❄️</span>
+                </div>
+                <div class="network-status-pill" id="networkStatusPill" title="حالة اتصال الشاشة">
+                    <span class="net-status-dot"></span>
+                    <span id="netStatusText">متصل بالإنترنت</span>
                 </div>
                 <div class="weather-pill" id="weatherWidget">
                     <span>الطقس:</span>
@@ -1788,6 +1953,17 @@
                                 <button class="btn-moazzin-listen" onclick="testPlayMoazzin('alafasy')" tabindex="0">استماع 🔊</button>
                             </div>
                         </div>
+                    
+                        <!-- Sheikh Mohammad Refaat -->
+                        <div class="moazzin-select-card" id="cardMoazzinRefaat" tabindex="0">
+                            <div class="moazzin-card-icon">📻</div>
+                            <div class="moazzin-card-name">الشيخ محمد رفعت</div>
+                            <div class="moazzin-card-sub">أذان مصر التاريخي الخالد</div>
+                            <div class="moazzin-actions-row">
+                                <button class="btn-moazzin-pick" onclick="applyMoazzin('refaat')" tabindex="0">اختيار ✔</button>
+                                <button class="btn-moazzin-listen" onclick="testPlayMoazzin('refaat')" tabindex="0">استماع 🔊</button>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -1814,6 +1990,25 @@
                             </div>
                             <div class="toggle-status-btn" id="btnToggleAutoDim">مفعل ✅</div>
                         </div>
+                    </div>
+                </div>
+
+                <!-- 4. SALAWAT PERIODIC VOICE REMINDER -->
+                <div class="settings-section-card">
+                    <div class="settings-section-title">
+                        <span>🕊️</span> التذكير الصوتي بالصلاة على النبي ﷺ (تنبيه صوتي ومرئي مبارك)
+                    </div>
+                    <div class="salawat-controls-row">
+                        <div class="salawat-freq-picker">
+                            <span class="freq-picker-label">تكرار التذكير:</span>
+                            <button class="btn-freq-pill" id="pillSalawat15" onclick="setSalawatInterval(15)" tabindex="0">كل 15 دقيقة</button>
+                            <button class="btn-freq-pill active-pill" id="pillSalawat30" onclick="setSalawatInterval(30)" tabindex="0">كل 30 دقيقة ✔</button>
+                            <button class="btn-freq-pill" id="pillSalawat60" onclick="setSalawatInterval(60)" tabindex="0">كل ساعة</button>
+                            <button class="btn-freq-pill" id="pillSalawat0" onclick="setSalawatInterval(0)" tabindex="0">إيقاف التذكير ✕</button>
+                        </div>
+                        <button class="btn-test-salawat" onclick="testPlaySalawat()" tabindex="0">
+                            <span>🔊</span> تجربة صوت التذكير الآن
+                        </button>
                     </div>
                 </div>
             </div>
@@ -2009,6 +2204,7 @@
             updateCalendarDates(now);
             checkPrayerSchedule(now);
             checkAutoNightDim(now);
+            checkSalawatReminder(now);
         }
         setInterval(updateClockDisplay, 500);
 
@@ -2057,13 +2253,20 @@
         // ======================== 5. CAIRO WEATHER (OPEN-METEO) ========================
         async function fetchCairoWeather() {
             try {
-                const res = await fetch('https://api.open-meteo.com/v1/forecast?latitude=30.0444&longitude=31.2357&current=temperature_2m,weather_code');
-                const data = await res.json();
-                if (data && data.current) {
-                    const temp = Math.round(data.current.temperature_2m);
-                    document.getElementById('weatherTemp').innerText = temp + "°C";
+                if (navigator.onLine !== false) {
+                    const res = await fetch('https://api.open-meteo.com/v1/forecast?latitude=30.0444&longitude=31.2357&current=temperature_2m,weather_code');
+                    const data = await res.json();
+                    if (data && data.current) {
+                        const temp = Math.round(data.current.temperature_2m);
+                        safeStorage.set('cached_weather_temp', temp);
+                        document.getElementById('weatherTemp').innerText = temp + "°C";
+                        return;
+                    }
                 }
             } catch (e) {}
+            // Offline fallback from local cache
+            const cachedTemp = safeStorage.get('cached_weather_temp', '22');
+            document.getElementById('weatherTemp').innerText = cachedTemp + "°C";
         }
         fetchCairoWeather();
         setInterval(fetchCairoWeather, 60 * 60 * 1000);
@@ -2135,38 +2338,137 @@
 
         let prayerScheduleToday = null;
 
-        async function fetchCairoPrayerTimes() {
-            try {
-                const now = getNowCairo();
-                const d = now.getDate();
-                const m = now.getMonth() + 1;
-                const y = now.getFullYear();
+        // High-Precision Astronomical Offline Calculation for Cairo, Egypt
+        // Method: Egyptian General Authority of Survey (الهيئة العامة للمساحة المصرية)
+        // Lat: 30.0444, Long: 31.2357, Timezone: UTC+2 (Cairo Standard Time)
+        function calculateCairoPrayerTimes(date) {
+            const lat = 30.0444;
+            const lng = 31.2357;
+            const timezone = 2; // Cairo UTC+2
 
-                const url = "https://api.aladhan.com/v1/timings/" + d + "-" + m + "-" + y + "?latitude=30.0444&longitude=31.2357&method=5";
-                const res = await fetch(url);
-                const data = await res.json();
-                if (data && data.data && data.data.timings) {
-                    const timings = data.data.timings;
-                    prayerScheduleToday = {
-                        fajr: timings.Fajr.substring(0, 5),
-                        sunrise: timings.Sunrise.substring(0, 5),
-                        dhuhr: timings.Dhuhr.substring(0, 5),
-                        asr: timings.Asr.substring(0, 5),
-                        maghrib: timings.Maghrib.substring(0, 5),
-                        isha: timings.Isha.substring(0, 5)
-                    };
-                    renderPrayerTimesUI();
+            const d = new Date(date);
+            let y = d.getFullYear();
+            let m = d.getMonth() + 1;
+            const day = d.getDate();
+
+            if (m <= 2) { y -= 1; m += 12; }
+            const a = Math.floor(y / 100);
+            const b = 2 - a + Math.floor(a / 4);
+            const jd = Math.floor(365.25 * (y + 4716)) + Math.floor(30.6001 * (m + 1)) + day + b - 1524.5;
+            const dDays = jd - 2451545.0;
+
+            const g = (357.529 + 0.98560028 * dDays) % 360;
+            const q = (280.459 + 0.98564736 * dDays) % 360;
+            const rad = Math.PI / 180;
+            const deg = 180 / Math.PI;
+
+            const L = (q + 1.915 * Math.sin(g * rad) + 0.020 * Math.sin(2 * g * rad)) % 360;
+            const e = 23.439 - 0.00000036 * dDays;
+            const dec = Math.asin(Math.sin(e * rad) * Math.sin(L * rad));
+            const RA = Math.atan2(Math.cos(e * rad) * Math.sin(L * rad), Math.cos(L * rad)) * deg;
+
+            let eqTime = (q/15 - (RA % 360)/15) * 60;
+            while (eqTime > 20) eqTime -= 24 * 60;
+            while (eqTime < -20) eqTime += 24 * 60;
+
+            const noon = 12 + timezone - (lng / 15) - (eqTime / 60);
+
+            function hourAngle(alpha) {
+                const cosHA = (-Math.sin(alpha * rad) - Math.sin(lat * rad) * Math.sin(dec)) / (Math.cos(lat * rad) * Math.cos(dec));
+                if (cosHA > 1 || cosHA < -1) return 0;
+                return Math.acos(cosHA) * deg / 15;
+            }
+
+            function asrHourAngle() {
+                const shadow = 1; // Shafi'i / Standard Egyptian Survey
+                const angle = -Math.atan(1 / (shadow + Math.tan(Math.abs(lat * rad - dec)))) * deg;
+                const cosHA = (-Math.sin(angle * rad) - Math.sin(lat * rad) * Math.sin(dec)) / (Math.cos(lat * rad) * Math.cos(dec));
+                if (cosHA > 1 || cosHA < -1) return 0;
+                return Math.acos(cosHA) * deg / 15;
+            }
+
+            const fajrHA = hourAngle(19.5); // Egyptian Survey: Fajr 19.5 deg
+            const sunHA = hourAngle(0.8333); // Sunrise / Sunset
+            const asrHA = asrHourAngle();
+            const ishaHA = hourAngle(17.5); // Egyptian Survey: Isha 17.5 deg
+
+            function toTimeString(hours) {
+                hours = (hours + 24) % 24;
+                const h = Math.floor(hours);
+                const min = Math.floor((hours - h) * 60 + 0.5);
+                return String(h).padStart(2, '0') + ':' + String(min).padStart(2, '0');
+            }
+
+            return {
+                fajr: toTimeString(noon - fajrHA),
+                sunrise: toTimeString(noon - sunHA),
+                dhuhr: toTimeString(noon),
+                asr: toTimeString(noon + asrHA),
+                maghrib: toTimeString(noon + sunHA),
+                isha: toTimeString(noon + ishaHA)
+            };
+        }
+
+        async function fetchCairoPrayerTimes() {
+            const now = getNowCairo();
+            const dateKey = now.getFullYear() + "-" + (now.getMonth() + 1) + "-" + now.getDate();
+
+            // 1. If online, fetch from Aladhan API (Method 5: Egyptian General Authority of Survey)
+            if (navigator.onLine !== false) {
+                try {
+                    const d = now.getDate();
+                    const m = now.getMonth() + 1;
+                    const y = now.getFullYear();
+                    const url = "https://api.aladhan.com/v1/timings/" + d + "-" + m + "-" + y + "?latitude=30.0444&longitude=31.2357&method=5";
+                    const res = await fetch(url);
+                    const data = await res.json();
+                    if (data && data.data && data.data.timings) {
+                        const timings = data.data.timings;
+                        prayerScheduleToday = {
+                            fajr: timings.Fajr.substring(0, 5),
+                            sunrise: timings.Sunrise.substring(0, 5),
+                            dhuhr: timings.Dhuhr.substring(0, 5),
+                            asr: timings.Asr.substring(0, 5),
+                            maghrib: timings.Maghrib.substring(0, 5),
+                            isha: timings.Isha.substring(0, 5)
+                        };
+                        // Cache today's exact timings
+                        safeStorage.set('cached_prayer_' + dateKey, JSON.stringify(prayerScheduleToday));
+                        safeStorage.set('cached_prayer_latest', JSON.stringify(prayerScheduleToday));
+                        renderPrayerTimesUI();
+                        return;
+                    }
+                } catch (err) {
+                    console.warn('[Prayer] Network fetch error, activating offline engine:', err);
                 }
-            } catch (err) {
-                prayerScheduleToday = {
-                    fajr: "04:54",
-                    sunrise: "06:22",
-                    dhuhr: "11:40",
-                    asr: "14:41",
-                    maghrib: "16:59",
-                    isha: "18:18"
-                };
+            }
+
+            // 2. Offline Fallback: Check localStorage cache for today
+            const cachedToday = safeStorage.get('cached_prayer_' + dateKey, null);
+            if (cachedToday) {
+                try {
+                    prayerScheduleToday = JSON.parse(cachedToday);
+                    renderPrayerTimesUI();
+                    return;
+                } catch (e) {}
+            }
+
+            // 3. Offline Fallback: Calculate exact astronomical times for Cairo
+            try {
+                prayerScheduleToday = calculateCairoPrayerTimes(now);
+                safeStorage.set('cached_prayer_' + dateKey, JSON.stringify(prayerScheduleToday));
+                safeStorage.set('cached_prayer_latest', JSON.stringify(prayerScheduleToday));
                 renderPrayerTimesUI();
+                return;
+            } catch (e) {}
+
+            // 4. Last resort: most recent cached schedule
+            const cachedLatest = safeStorage.get('cached_prayer_latest', null);
+            if (cachedLatest) {
+                try {
+                    prayerScheduleToday = JSON.parse(cachedLatest);
+                    renderPrayerTimesUI();
+                } catch (e) {}
             }
         }
         fetchCairoPrayerTimes();
@@ -2631,23 +2933,28 @@
         // ======================== 12. INTERACTIVE MOAZZIN SELECTION ========================
         let selectedMoazzin = "makkah";
 
+        // Verified Distinct Authentic High-Quality Azan Audio URLs
         const MOAZZIN_AUDIO_MAP = {
-            makkah: "https://server8.mp3quran.net/athan/01.mp3",
-            madinah: "https://server8.mp3quran.net/athan/02.mp3",
-            abdulbasit: "https://server8.mp3quran.net/athan/05.mp3",
-            alafasy: "https://server8.mp3quran.net/athan/04.mp3"
+            makkah: "https://raw.githubusercontent.com/Kiwifu/adhan-mp3/master/Ali_Ibn_Ahmad_Mala_-_HQ_(%D8%B9%D9%84%D9%8A_%D8%A8%D9%86_%D8%A3%D8%AD%D9%85%D8%AF_%D9%85%D9%84%D8%A7).mp3",
+            madinah: "https://raw.githubusercontent.com/Kiwifu/adhan-mp3/master/Adhan_Al_Haram_Al_Madani_-_Al_Madinah_1_(%D8%A3%D8%B0%D8%A7%D9%86_%D8%A7%D9%84%D8%AD%D8%B1%D9%85_%D8%A7%D9%84%D9%85%D8%AF%D9%86%D9%8A_-_%D8%A7%D9%84%D9%85%D8%AF%D9%8A%D9%86%D8%A9_%D8%A7%D9%84%D9%85%D9%86%D9%88%D8%B1%D8%A9).mp3",
+            abdulbasit: "https://raw.githubusercontent.com/Kiwifu/adhan-mp3/master/Abdulbasit_Abdusamad_1_-_Egypt_(%D8%B9%D8%A8%D8%AF_%D8%A7%D9%84%D8%A8%D8%A7%D8%B3%D8%B7_%D8%B9%D8%A8%D8%AF_%D8%A7%D9%84%D8%B5%D9%85%D8%AF_-_%D9%85%D8%B5%D8%B1).mp3",
+            alafasy: "https://raw.githubusercontent.com/Kiwifu/adhan-mp3/master/Mishary_Al_Afasy_-_HQ_(%D9%85%D8%B4%D8%A7%D8%B1%D9%8A_%D8%A7%D9%84%D8%B9%D9%81%D8%A7%D8%B3%D9%8A).mp3",
+            refaat: "https://raw.githubusercontent.com/abodehq/Athan-MP3/master/Sounds/Athan%20Mohammad%20Ref3at.mp3"
         };
 
+        const FAJR_AZAN_AUDIO_URL = "https://raw.githubusercontent.com/Kiwifu/adhan-mp3/master/Adhan_Fajr_Al_Haram_Al_Maki_(%D8%A3%D8%B0%D8%A7%D9%86_%D8%A7%D9%84%D9%81%D8%AC%D8%B1_%D8%A7%D9%84%D8%AD%D8%B1%D9%85_%D8%A7%D9%84%D9%85%D9%83%D9%8A).mp3";
+
         const MOAZZIN_NAMES = {
-            makkah: "أذان الحرم المكي الشريف",
+            makkah: "أذان الحرم المكي (الشيخ علي ملا)",
             madinah: "أذان المسجد النبوي الشريف",
-            abdulbasit: "أذان الشيخ عبد الباسط",
-            alafasy: "أذان الشيخ مشاري العفاسي"
+            abdulbasit: "أذان الشيخ عبد الباسط عبد الصمد",
+            alafasy: "أذان الشيخ مشاري العفاسي",
+            refaat: "أذان الشيخ محمد رفعت"
         };
 
         function applyMoazzin(mKey) {
             selectedMoazzin = mKey;
-            ['Makkah', 'Madinah', 'Abdulbasit', 'Alafasy'].forEach(k => {
+            ['Makkah', 'Madinah', 'Abdulbasit', 'Alafasy', 'Refaat'].forEach(k => {
                 const card = document.getElementById("cardMoazzin" + k);
                 if (card) {
                     if (k.toLowerCase() === mKey.toLowerCase()) card.classList.add('active-moazzin');
@@ -2657,6 +2964,103 @@
 
             safeStorage.set('pref_moazzin', mKey);
             showToast("تم اختيار " + MOAZZIN_NAMES[mKey] + " بنجاح", "🎙️");
+        }
+
+        // ======================== SALAWAT ON THE PROPHET SYSTEM ========================
+        const SALAWAT_AUDIO_URL = "https://archive.org/download/20210301_20210301_1201/%D8%B5%D9%84%D9%8A%20%D8%B9%D9%84%D9%8A%20%D9%85%D8%AD%D9%85%D8%AF.mp3";
+        const SALAWAT_AUDIO_FALLBACK = "https://archive.org/download/489-i-7-ei-7-yy-u/%D8%A7%D9%84%D9%84%D9%87%D9%85%20%D8%B5%D9%84%D9%91%20%D8%B9%D9%84%D9%89%20%D8%B3%D9%8A%D8%AF%D9%86%D8%A7%20%D9%85%D8%AD%D9%85%D8%AF%20%D8%8C%20%D8%A7%D9%84%D8%B5%D9%84%D8%A7%D8%A9%20%D8%B9%D9%84%D9%89%20%D8%A7%D9%84%D9%86%D8%A8%D9%8A%20%D8%A8%D8%B5%D9%88%D8%AA%20%D8%AC%D9%85%D9%8A%D9%84%20%D9%8A%D8%B1%D9%8A%D8%AD%20%D8%A7%D9%84%D9%86%D9%81%D8%B3%20%D9%88%D9%8A%D8%B3%D8%B9%D8%AF%20%D8%A7%D9%84%D9%82%D9%84%D8%A8%20%5B489I7Ei7YyU%5D.mp3";
+
+        let salawatIntervalMinutes = 30; // Default: every 30 mins
+        let lastSalawatTriggerKey = null;
+
+        function setSalawatInterval(mins) {
+            salawatIntervalMinutes = mins;
+            [15, 30, 60, 0].forEach(val => {
+                const pill = document.getElementById('pillSalawat' + val);
+                if (pill) {
+                    if (val === mins) pill.classList.add('active-pill');
+                    else pill.classList.remove('active-pill');
+                }
+            });
+            safeStorage.set('pref_salawat_interval', mins);
+            if (mins === 0) {
+                showToast("تم إيقاف التذكير الصوتي بالصلاة على النبي", "🕊️");
+            } else {
+                showToast("تم ضبط التذكير بالصلاة على النبي كل " + mins + " دقيقة", "🕊️");
+            }
+        }
+
+        function playSalawatVoice(isTest = false) {
+            unlockAudioSystem();
+            const overlay = document.getElementById('salawatToastOverlay');
+            if (overlay) {
+                overlay.classList.add('show');
+                setTimeout(() => {
+                    overlay.classList.remove('show');
+                }, 8000);
+            }
+
+            const salawatPlayer = document.getElementById('salawatAudioPlayer');
+            if (!salawatPlayer) return;
+
+            const radioPlayer = document.getElementById('radioAudioPlayer');
+            const quranPlayer = document.getElementById('quranAudioPlayer');
+            let prevRadioVol = radioPlayer ? radioPlayer.volume : 1;
+            let prevQuranVol = quranPlayer ? quranPlayer.volume : 1;
+
+            // Duck background audio gently
+            if (radioPlayer && !radioPlayer.paused) radioPlayer.volume = 0.15;
+            if (quranPlayer && !quranPlayer.paused) quranPlayer.volume = 0.15;
+
+            salawatPlayer.src = SALAWAT_AUDIO_URL;
+            salawatPlayer.onerror = function() {
+                if (salawatPlayer.src !== SALAWAT_AUDIO_FALLBACK) {
+                    salawatPlayer.src = SALAWAT_AUDIO_FALLBACK;
+                    salawatPlayer.play().catch(e => {});
+                }
+            };
+
+            salawatPlayer.onended = function() {
+                if (radioPlayer && !radioPlayer.paused) radioPlayer.volume = prevRadioVol;
+                if (quranPlayer && !quranPlayer.paused) quranPlayer.volume = prevQuranVol;
+            };
+
+            salawatPlayer.play().catch(e => {
+                if (radioPlayer && !radioPlayer.paused) radioPlayer.volume = prevRadioVol;
+                if (quranPlayer && !quranPlayer.paused) quranPlayer.volume = prevQuranVol;
+            });
+
+            if (isTest) {
+                showToast("ﷺ اللَّهُمَّ صَلِّ وَسَلِّمْ عَلَى نَبِيِّنَا مُحَمَّدٍ", "🕊️");
+            }
+        }
+
+        function testPlaySalawat() {
+            playSalawatVoice(true);
+        }
+
+        function checkSalawatReminder(now) {
+            if (salawatIntervalMinutes === 0) return;
+            const azanScreen = document.getElementById('azanScreen');
+            if (azanScreen && azanScreen.style.display === 'flex') return;
+
+            const m = now.getMinutes();
+            const s = now.getSeconds();
+
+            if (s !== 0) return;
+
+            let shouldFire = false;
+            if (salawatIntervalMinutes === 15 && (m % 15 === 0)) shouldFire = true;
+            else if (salawatIntervalMinutes === 30 && (m % 30 === 0)) shouldFire = true;
+            else if (salawatIntervalMinutes === 60 && m === 0) shouldFire = true;
+
+            if (!shouldFire) return;
+
+            const triggerKey = now.getFullYear() + "-" + now.getMonth() + "-" + now.getDate() + "-" + now.getHours() + "-" + m;
+            if (lastSalawatTriggerKey === triggerKey) return;
+            lastSalawatTriggerKey = triggerKey;
+
+            playSalawatVoice(false);
         }
 
         function testPlayMoazzin(mKey) {
@@ -2748,7 +3152,7 @@
             document.getElementById('azanScreen').style.display = 'flex';
 
             const isFajr = (prayerKey === 'fajr');
-            const azanUrl = isFajr ? "https://server8.mp3quran.net/athan/03.mp3" : (MOAZZIN_AUDIO_MAP[selectedMoazzin] || MOAZZIN_AUDIO_MAP.makkah);
+            const azanUrl = isFajr ? FAJR_AZAN_AUDIO_URL : (MOAZZIN_AUDIO_MAP[selectedMoazzin] || MOAZZIN_AUDIO_MAP.makkah);
 
             if (azanPlayer) {
                 azanPlayer.src = azanUrl;
@@ -2832,6 +3236,34 @@
         // STRICT SCROLL LOCK: Prevent any spatial remote scroll
         window.addEventListener('scroll', () => window.scrollTo(0, 0), { passive: false });
 
+        
+        // ======================== NETWORK STATUS MONITOR ========================
+        function updateNetworkStatus() {
+            const isOnline = navigator.onLine !== false;
+            const pill = document.getElementById('networkStatusPill');
+            const txt = document.getElementById('netStatusText');
+            if (!pill || !txt) return;
+
+            if (isOnline) {
+                pill.className = 'network-status-pill';
+                txt.innerText = 'متصل بالإنترنت';
+            } else {
+                pill.className = 'network-status-pill offline';
+                txt.innerText = 'وضع عدم الاتصال (المواقيت دقيقة)';
+            }
+        }
+        window.addEventListener('online', updateNetworkStatus);
+        window.addEventListener('offline', updateNetworkStatus);
+
+        // Register Service Worker for Complete Offline App Support
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js').catch(err => {
+                    console.log('[SW] ServiceWorker info:', err);
+                });
+            });
+        }
+
         // ======================== 17. LOAD PREFERENCES AT VERY END (SAFELY) ========================
         function loadPreferences() {
             const m = safeStorage.get('pref_moazzin', 'makkah');
@@ -2855,6 +3287,11 @@
                 btnAD.className = isAutoDimEnabled ? "toggle-status-btn" : "toggle-status-btn disabled";
                 btnAD.innerText = isAutoDimEnabled ? "مفعل ✅" : "معطل ❌";
             }
+
+            const si = parseInt(safeStorage.get('pref_salawat_interval', '30'), 10);
+            setSalawatInterval(isNaN(si) ? 30 : si);
+
+            updateNetworkStatus();
         }
         loadPreferences();
 </script>
