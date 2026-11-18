@@ -1,0 +1,2862 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>شاشة المواقيت والقرآن الكريم - Smart TV Display</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Almarai:wght@300;400;700;800&family=Amiri:ital,wght@0,400;0,700;1,400&family=Readex+Pro:wght@400;500;600;700;800&family=Tajawal:wght@400;500;700;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            /* Theme 1: Winter Ice (Default) */
+            --bg-main: radial-gradient(circle at 50% 20%, #0c1a2e 0%, #060e1a 50%, #02050a 100%);
+            --accent-primary: #38bdf8;
+            --accent-glow: rgba(56, 189, 248, 0.45);
+            --card-glass: rgba(10, 22, 38, 0.88);
+            --card-border: rgba(125, 211, 252, 0.25);
+            --text-pure: #ffffff;
+            --text-muted: #94a3b8;
+            --gold: #fde047;
+            --gold-deep: #d4af37;
+            --emerald: #34d399;
+            --danger: #ef4444;
+        }
+
+        /* Theme 2: Royal Kaaba Gold */
+        body.theme-kaaba {
+            --bg-main: radial-gradient(circle at 50% 20%, #17120a 0%, #0a0805 50%, #030201 100%);
+            --accent-primary: #d4af37;
+            --accent-glow: rgba(212, 175, 55, 0.5);
+            --card-glass: rgba(24, 18, 10, 0.9);
+            --card-border: rgba(212, 175, 55, 0.35);
+            --gold: #fff089;
+            --gold-deep: #b59021;
+        }
+
+        /* Theme 3: Midnight Serenity */
+        body.theme-midnight {
+            --bg-main: radial-gradient(circle at 50% 20%, #0f172a 0%, #07090e 50%, #010204 100%);
+            --accent-primary: #818cf8;
+            --accent-glow: rgba(129, 140, 248, 0.45);
+            --card-glass: rgba(15, 23, 42, 0.9);
+            --card-border: rgba(165, 180, 252, 0.28);
+            --gold: #fde047;
+            --gold-deep: #d4af37;
+        }
+
+        /* Smart Night Dimming Mode */
+        body.night-dimmed {
+            filter: brightness(0.32) contrast(0.95);
+            transition: filter 1s ease-in-out;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            user-select: none;
+            font-variant-numeric: tabular-nums;
+            -webkit-font-feature-settings: "tnum";
+            font-feature-settings: "tnum";
+        }
+
+        /* STRICT TV VIEWPORT LOCK */
+        html, body {
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            right: 0 !important;
+            bottom: 0 !important;
+            width: 100vw !important;
+            height: 100vh !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            overflow: hidden !important;
+            background: var(--bg-main);
+            color: var(--text-pure);
+            font-family: 'Almarai', 'Tajawal', sans-serif;
+            transition: background 0.8s ease;
+        }
+
+        #snowCanvas {
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .ambient-orb {
+            position: absolute;
+            width: 550px;
+            height: 550px;
+            background: radial-gradient(circle, var(--accent-glow) 0%, transparent 70%);
+            border-radius: 50%;
+            pointer-events: none;
+            filter: blur(70px);
+            z-index: 0;
+        }
+        .orb-1 { top: -160px; left: 50%; transform: translateX(-50%); }
+
+        .app-container {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 16px 40px;
+            box-sizing: border-box;
+            z-index: 2;
+            overflow: hidden !important;
+            pointer-events: auto;
+        }
+
+        /* ======================== HEADER BAR ======================== */
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            height: 50px;
+            border-bottom: 1px solid var(--card-border);
+            padding-bottom: 6px;
+        }
+
+        .header-meta-left {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .winter-badge {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: var(--card-glass);
+            border: 1px solid var(--card-border);
+            padding: 5px 14px;
+            border-radius: 30px;
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: var(--accent-primary);
+            backdrop-filter: blur(10px);
+            box-shadow: 0 0 15px var(--accent-glow);
+        }
+
+        .winter-badge svg {
+            width: 16px;
+            height: 16px;
+            fill: var(--accent-primary);
+        }
+
+        .weather-pill {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            background: var(--card-glass);
+            border: 1px solid var(--card-border);
+            padding: 5px 14px;
+            border-radius: 30px;
+            font-size: 0.95rem;
+            color: var(--text-muted);
+        }
+
+        .weather-temp {
+            color: var(--gold);
+            font-weight: 800;
+        }
+
+        .smart-notification-pill {
+            display: none;
+            align-items: center;
+            gap: 6px;
+            background: rgba(212, 175, 55, 0.15);
+            border: 1px solid var(--gold);
+            color: var(--gold);
+            padding: 5px 14px;
+            border-radius: 30px;
+            font-size: 0.9rem;
+            font-weight: 700;
+            animation: pulseGlow 2s infinite;
+        }
+
+        @keyframes pulseGlow {
+            0%, 100% { box-shadow: 0 0 5px rgba(212, 175, 55, 0.3); }
+            50% { box-shadow: 0 0 20px rgba(212, 175, 55, 0.7); }
+        }
+
+        .bismillah-center {
+            font-family: 'Amiri', serif;
+            font-size: 1.55rem;
+            font-weight: 700;
+            color: var(--gold);
+            letter-spacing: 1px;
+            text-shadow: 0 0 20px rgba(253, 224, 71, 0.45);
+        }
+
+        .header-meta-right {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-align: left;
+        }
+
+        .hijri-date-text {
+            font-size: 1.05rem;
+            font-weight: 800;
+            color: var(--text-pure);
+        }
+
+        .gregorian-date-text {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            border-right: 1px solid var(--card-border);
+            padding-right: 12px;
+        }
+
+        /* ======================== MAIN SECTION: CLOCK & PRAYERS ======================== */
+        main {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 14px;
+            margin: auto 0;
+            width: 100%;
+        }
+
+        /* ROCK-SOLID CLOCK: Tabular digits, strictly LTR, no width vibration */
+        .clock-wrapper {
+            display: flex;
+            align-items: baseline;
+            justify-content: center;
+            gap: 18px;
+            direction: ltr !important;
+            unicode-bidi: isolate;
+        }
+
+        .grand-clock {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Readex Pro', 'Almarai', sans-serif;
+            font-size: 7rem;
+            font-weight: 800;
+            line-height: 0.95;
+            color: #ffffff;
+            direction: ltr !important;
+            unicode-bidi: isolate;
+            text-shadow: 0 0 35px var(--accent-glow), 0 10px 40px rgba(0, 0, 0, 0.8);
+            letter-spacing: 2px;
+        }
+
+        .grand-clock .digit-box {
+            display: inline-block;
+            width: 175px;
+            text-align: center;
+            font-variant-numeric: tabular-nums;
+            direction: ltr !important;
+        }
+
+        .clock-colon {
+            display: inline-block;
+            color: var(--accent-primary);
+            animation: blinkColon 1s infinite;
+            margin: 0 -5px;
+            user-select: none;
+        }
+
+        @keyframes blinkColon {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.25; }
+        }
+
+        .clock-sub-meta {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 2px;
+        }
+
+        .clock-seconds-box {
+            font-family: 'Readex Pro', sans-serif;
+            font-size: 2.1rem;
+            font-weight: 700;
+            color: var(--accent-primary);
+            font-variant-numeric: tabular-nums;
+            width: 48px;
+            direction: ltr !important;
+        }
+
+        .clock-ampm-text {
+            font-size: 1.15rem;
+            font-weight: 800;
+            color: var(--gold);
+        }
+
+        /* Next Prayer Hero Banner */
+        .hero-next-prayer-banner {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            background: linear-gradient(90deg, rgba(56, 189, 248, 0.12), rgba(10, 22, 38, 0.8), rgba(56, 189, 248, 0.12));
+            border: 1px solid var(--accent-primary);
+            padding: 7px 30px;
+            border-radius: 40px;
+            box-shadow: 0 0 25px var(--accent-glow);
+            backdrop-filter: blur(15px);
+        }
+
+        .next-tag {
+            font-size: 1.05rem;
+            font-weight: 700;
+            color: var(--text-muted);
+        }
+
+        .next-prayer-title {
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: #ffffff;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .countdown-digits {
+            font-family: 'Readex Pro', sans-serif;
+            font-size: 1.6rem;
+            font-weight: 800;
+            color: var(--gold);
+            font-variant-numeric: tabular-nums;
+            letter-spacing: 1px;
+            direction: ltr !important;
+            padding: 2px 14px;
+            background: rgba(0, 0, 0, 0.35);
+            border-radius: 12px;
+            border: 1px solid rgba(253, 224, 71, 0.3);
+        }
+
+        /* 6 Prayer Cards Grid */
+        .prayers-grid-container {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 14px;
+            width: 100%;
+            max-width: 1250px;
+        }
+
+        .prayer-glass-card {
+            background: var(--card-glass);
+            border: 1.5px solid var(--card-border);
+            border-radius: 18px;
+            padding: 14px 10px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            position: relative;
+            backdrop-filter: blur(14px);
+            transition: all 0.3s ease;
+        }
+
+        .prayer-glass-card.active-target {
+            border-color: var(--accent-primary);
+            background: linear-gradient(160deg, rgba(56, 189, 248, 0.25), rgba(10, 22, 38, 0.95));
+            box-shadow: 0 0 30px var(--accent-glow), inset 0 0 15px rgba(56, 189, 248, 0.2);
+            transform: translateY(-4px) scale(1.02);
+        }
+
+        .card-icon-wrap {
+            font-size: 1.7rem;
+            filter: drop-shadow(0 0 8px var(--accent-glow));
+        }
+
+        .card-prayer-name {
+            font-size: 1.2rem;
+            font-weight: 800;
+            color: #ffffff;
+        }
+
+        .card-prayer-time {
+            font-family: 'Readex Pro', sans-serif;
+            font-size: 1.6rem;
+            font-weight: 800;
+            color: var(--gold);
+            letter-spacing: 0.5px;
+            direction: ltr !important;
+        }
+
+        .card-badge {
+            font-size: 0.72rem;
+            font-weight: 700;
+            color: var(--text-muted);
+            padding: 2px 9px;
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.06);
+        }
+
+        .prayer-glass-card.active-target .card-badge {
+            background: var(--accent-primary);
+            color: #030712;
+            font-weight: 800;
+        }
+
+        /* ======================== FOOTER & MARQUEE ======================== */
+        footer {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            width: 100%;
+            border-top: 1px solid var(--card-border);
+            padding-top: 10px;
+            z-index: 50;
+            position: relative;
+            pointer-events: auto !important;
+        }
+
+        .footer-action-pills {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 14px;
+        }
+
+        .action-pill-btn {
+            background: var(--card-glass);
+            border: 1.5px solid var(--card-border);
+            color: var(--text-pure);
+            padding: 8px 18px;
+            border-radius: 30px;
+            font-size: 0.95rem;
+            font-weight: 700;
+            font-family: 'Almarai', sans-serif;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s;
+            backdrop-filter: blur(10px);
+            outline: none;
+            position: relative;
+            z-index: 60;
+            pointer-events: auto !important;
+        }
+
+        .action-pill-btn:hover, .action-pill-btn:focus, .action-pill-btn:active {
+            border-color: var(--accent-primary);
+            box-shadow: 0 0 20px var(--accent-glow);
+            transform: scale(1.05);
+            background: rgba(56, 189, 248, 0.25);
+            color: #ffffff;
+        }
+
+        .athkar-marquee {
+            text-align: center;
+            font-family: 'Amiri', serif;
+            font-size: 1.25rem;
+            color: #ffffff;
+            background: rgba(0, 0, 0, 0.45);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 30px;
+            padding: 6px 25px;
+            cursor: pointer;
+            transition: all 0.3s;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .athkar-marquee:hover {
+            border-color: var(--gold);
+            color: var(--gold);
+        }
+
+        /* ======================== LUXURY QURAN & RADIO SUITE MODAL ======================== */
+        .quran-suite-modal {
+            position: fixed;
+            inset: 0;
+            background: radial-gradient(circle at 50% 25%, rgba(12, 26, 46, 0.985), rgba(4, 9, 16, 0.998));
+            z-index: 200;
+            display: none;
+            flex-direction: column;
+            backdrop-filter: blur(35px);
+            animation: fadeIn 0.25s ease forwards;
+            padding: 20px 45px;
+            justify-content: space-between;
+            overflow-y: auto;
+            pointer-events: auto;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.99); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        .suite-top-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1.5px solid var(--card-border);
+            padding-bottom: 12px;
+        }
+
+        .suite-title-badge {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-family: 'Amiri', serif;
+            font-size: 1.55rem;
+            font-weight: 700;
+            color: var(--gold);
+            text-shadow: 0 0 15px rgba(253, 224, 71, 0.4);
+        }
+
+        .suite-nav-tabs {
+            display: flex;
+            gap: 10px;
+        }
+
+        .suite-tab-btn {
+            background: rgba(255, 255, 255, 0.06);
+            border: 1.5px solid var(--card-border);
+            color: var(--text-muted);
+            padding: 9px 20px;
+            border-radius: 40px;
+            font-size: 1.05rem;
+            font-weight: 700;
+            font-family: 'Almarai', sans-serif;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s;
+            outline: none;
+        }
+
+        .suite-tab-btn:hover, .suite-tab-btn:focus {
+            border-color: var(--accent-primary);
+            color: #ffffff;
+            transform: scale(1.03);
+        }
+
+        .suite-tab-btn.active {
+            background: linear-gradient(135deg, var(--accent-primary), #0284c7);
+            border-color: var(--accent-primary);
+            color: #ffffff;
+            box-shadow: 0 0 25px var(--accent-glow);
+        }
+
+        .suite-close-btn {
+            background: rgba(239, 68, 68, 0.15);
+            border: 1.5px solid rgba(239, 68, 68, 0.5);
+            color: #fca5a5;
+            padding: 8px 22px;
+            border-radius: 30px;
+            font-size: 1rem;
+            font-weight: 800;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s;
+            outline: none;
+        }
+
+        .suite-close-btn:hover, .suite-close-btn:focus {
+            background: #ef4444;
+            color: #ffffff;
+            box-shadow: 0 0 25px rgba(239, 68, 68, 0.6);
+            transform: scale(1.05);
+        }
+
+        .suite-content-stage {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            margin: auto 0;
+            width: 100%;
+            padding: 10px 0;
+        }
+
+        /* ---------------- TAB 1: LIVE RADIOS (8 LUXURY CHANNELS) ---------------- */
+        .radios-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            width: 100%;
+            max-width: 1250px;
+        }
+
+        .radio-channel-card {
+            background: var(--card-glass);
+            border: 1.5px solid var(--card-border);
+            border-radius: 18px;
+            padding: 16px 14px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            gap: 9px;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            position: relative;
+            outline: none;
+        }
+
+        .radio-channel-card:hover, .radio-channel-card:focus {
+            border-color: var(--accent-primary);
+            box-shadow: 0 0 25px var(--accent-glow);
+            transform: translateY(-4px) scale(1.02);
+            background: rgba(56, 189, 248, 0.15);
+        }
+
+        .radio-channel-card.playing {
+            border-color: var(--gold);
+            box-shadow: 0 0 35px rgba(253, 224, 71, 0.45);
+            background: linear-gradient(145deg, rgba(212, 175, 55, 0.18), rgba(10, 22, 38, 0.95));
+            transform: translateY(-4px);
+        }
+
+        .radio-top-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+        }
+
+        .radio-freq-badge {
+            font-size: 0.72rem;
+            font-weight: 800;
+            color: var(--gold);
+            background: rgba(253, 224, 71, 0.12);
+            border: 1px solid rgba(253, 224, 71, 0.3);
+            padding: 2px 8px;
+            border-radius: 12px;
+        }
+
+        .radio-live-tag {
+            background: #ef4444;
+            color: #fff;
+            font-size: 0.7rem;
+            font-weight: 800;
+            padding: 2px 8px;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .radio-live-dot {
+            width: 6px;
+            height: 6px;
+            background: #fff;
+            border-radius: 50%;
+            animation: blink 1s infinite;
+        }
+
+        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+
+        .radio-card-icon {
+            font-size: 2.4rem;
+            filter: drop-shadow(0 0 12px var(--accent-glow));
+        }
+
+        .radio-card-name {
+            font-size: 1.1rem;
+            font-weight: 800;
+            color: #ffffff;
+            line-height: 1.3;
+        }
+
+        .radio-card-desc {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            line-height: 1.35;
+            min-height: 32px;
+        }
+
+        .radio-play-btn {
+            background: var(--accent-primary);
+            color: #030712;
+            font-weight: 800;
+            padding: 6px 18px;
+            border-radius: 20px;
+            font-size: 0.88rem;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s;
+        }
+
+        .radio-channel-card.playing .radio-play-btn {
+            background: #ef4444;
+            color: #ffffff;
+        }
+
+        /* ---------------- TAB 2: RECITERS & 114 SURAHS (LUXURY HI-FI PLAYER) ---------------- */
+        .reciter-stage-wrap {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            width: 100%;
+            max-width: 1100px;
+        }
+
+        .quick-reciter-scroll {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            overflow-x: auto;
+            padding-bottom: 6px;
+            scrollbar-width: none;
+        }
+        .quick-reciter-scroll::-webkit-scrollbar { display: none; }
+
+        .quick-reciter-pill {
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid var(--card-border);
+            color: var(--text-pure);
+            padding: 6px 14px;
+            border-radius: 25px;
+            font-size: 0.88rem;
+            font-weight: 700;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: all 0.2s;
+            outline: none;
+        }
+
+        .quick-reciter-pill:hover, .quick-reciter-pill:focus, .quick-reciter-pill.active {
+            background: linear-gradient(135deg, var(--gold-deep), var(--gold));
+            color: #000;
+            border-color: var(--gold);
+            box-shadow: 0 0 15px rgba(253, 224, 71, 0.4);
+            transform: scale(1.03);
+        }
+
+        .selectors-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            width: 100%;
+        }
+
+        .custom-select-box {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .custom-select-box label {
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: var(--gold);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .custom-select-box select {
+            background: rgba(15, 30, 52, 0.95);
+            border: 1.5px solid var(--card-border);
+            color: #fff;
+            padding: 10px 16px;
+            border-radius: 14px;
+            font-size: 1.05rem;
+            font-family: 'Almarai', sans-serif;
+            outline: none;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .custom-select-box select:focus {
+            border-color: var(--accent-primary);
+            box-shadow: 0 0 20px var(--accent-glow);
+        }
+
+        .quran-master-player-bar {
+            background: linear-gradient(160deg, rgba(14, 26, 44, 0.95), rgba(7, 14, 26, 0.98));
+            border: 2px solid var(--card-border);
+            padding: 16px 28px;
+            border-radius: 22px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            box-shadow: 0 10px 35px rgba(0, 0, 0, 0.6);
+            position: relative;
+        }
+
+        .player-top-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .track-meta {
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+        }
+
+        .track-title {
+            font-family: 'Amiri', serif;
+            font-size: 1.7rem;
+            font-weight: 700;
+            color: #ffffff;
+        }
+
+        .track-sub {
+            font-size: 1rem;
+            color: var(--gold);
+            font-weight: 700;
+        }
+
+        .audio-visualizer-bars {
+            display: inline-flex;
+            align-items: flex-end;
+            gap: 4px;
+            height: 26px;
+            padding: 0 10px;
+        }
+
+        .audio-visualizer-bars span {
+            width: 4px;
+            background: var(--accent-primary);
+            border-radius: 2px;
+            height: 20%;
+            transition: height 0.15s ease;
+        }
+
+        .audio-visualizer-bars.active span {
+            animation: barBounce 0.7s ease-in-out infinite alternate;
+        }
+        .audio-visualizer-bars.active span:nth-child(1) { animation-delay: 0.1s; }
+        .audio-visualizer-bars.active span:nth-child(2) { animation-delay: 0.3s; }
+        .audio-visualizer-bars.active span:nth-child(3) { animation-delay: 0.15s; }
+        .audio-visualizer-bars.active span:nth-child(4) { animation-delay: 0.4s; }
+        .audio-visualizer-bars.active span:nth-child(5) { animation-delay: 0.25s; }
+
+        @keyframes barBounce {
+            0% { height: 20%; }
+            100% { height: 100%; }
+        }
+
+        .player-actions-cluster {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .suite-btn-play {
+            background: linear-gradient(135deg, var(--accent-primary), #0284c7);
+            border: none;
+            color: #fff;
+            width: 54px;
+            height: 54px;
+            border-radius: 50%;
+            font-size: 1.4rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 0 25px var(--accent-glow);
+            transition: transform 0.2s, box-shadow 0.2s;
+            outline: none;
+        }
+
+        .suite-btn-play:hover, .suite-btn-play:focus {
+            transform: scale(1.1);
+            box-shadow: 0 0 35px var(--accent-glow);
+        }
+
+        .suite-btn-step {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid var(--card-border);
+            color: #fff;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            font-size: 1.1rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            outline: none;
+            transition: all 0.2s;
+        }
+        .suite-btn-step:hover, .suite-btn-step:focus {
+            border-color: var(--accent-primary);
+            background: rgba(56, 189, 248, 0.2);
+            transform: scale(1.08);
+        }
+
+        .suite-btn-repeat {
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid var(--card-border);
+            color: var(--text-muted);
+            padding: 7px 14px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 700;
+            cursor: pointer;
+            outline: none;
+            transition: all 0.2s;
+        }
+        .suite-btn-repeat.active {
+            background: rgba(52, 211, 153, 0.2);
+            border-color: var(--emerald);
+            color: var(--emerald);
+        }
+
+        .player-progress-container {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            width: 100%;
+        }
+
+        .player-time-label {
+            font-family: 'Readex Pro', sans-serif;
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            min-width: 48px;
+            font-variant-numeric: tabular-nums;
+            direction: ltr !important;
+            text-align: center;
+        }
+
+        .player-seek-bar {
+            flex: 1;
+            height: 7px;
+            border-radius: 4px;
+            background: rgba(255, 255, 255, 0.12);
+            outline: none;
+            -webkit-appearance: none;
+            appearance: none;
+            cursor: pointer;
+        }
+
+        .player-seek-bar::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: var(--gold);
+            box-shadow: 0 0 10px var(--gold);
+            cursor: pointer;
+        }
+
+        /* ---------------- TAB 3: VISUAL INTERACTIVE SETTINGS (NO BROKEN DROPDOWNS) ---------------- */
+        .settings-master-container {
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+            width: 100%;
+            max-width: 1150px;
+        }
+
+        .settings-section-card {
+            background: var(--card-glass);
+            border: 1.5px solid var(--card-border);
+            border-radius: 20px;
+            padding: 16px 22px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            backdrop-filter: blur(15px);
+        }
+
+        .settings-section-title {
+            font-size: 1.15rem;
+            font-weight: 800;
+            color: var(--gold);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            border-bottom: 1px solid var(--card-border);
+            padding-bottom: 8px;
+        }
+
+        /* Visual Theme Cards Row */
+        .theme-cards-row {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 14px;
+        }
+
+        .theme-select-card {
+            background: rgba(255, 255, 255, 0.04);
+            border: 2px solid var(--card-border);
+            border-radius: 16px;
+            padding: 14px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            gap: 8px;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            outline: none;
+        }
+
+        .theme-select-card:hover, .theme-select-card:focus {
+            border-color: var(--accent-primary);
+            box-shadow: 0 0 20px var(--accent-glow);
+            transform: translateY(-3px) scale(1.02);
+            background: rgba(56, 189, 248, 0.12);
+        }
+
+        .theme-select-card.active-theme {
+            border-color: var(--gold);
+            box-shadow: 0 0 30px rgba(253, 224, 71, 0.45);
+            background: linear-gradient(145deg, rgba(212, 175, 55, 0.2), rgba(10, 22, 38, 0.95));
+            transform: translateY(-3px);
+        }
+
+        .theme-card-icon {
+            font-size: 2.2rem;
+        }
+
+        .theme-card-title {
+            font-size: 1.05rem;
+            font-weight: 800;
+            color: #ffffff;
+        }
+
+        .theme-card-desc {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        .theme-status-tag {
+            font-size: 0.78rem;
+            font-weight: 800;
+            padding: 3px 12px;
+            border-radius: 14px;
+            background: rgba(255, 255, 255, 0.08);
+            color: var(--text-muted);
+            margin-top: 4px;
+        }
+
+        .theme-select-card.active-theme .theme-status-tag {
+            background: var(--gold);
+            color: #000;
+        }
+
+        /* Visual Moazzin Cards Row */
+        .moazzin-cards-row {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+        }
+
+        .moazzin-select-card {
+            background: rgba(255, 255, 255, 0.04);
+            border: 2px solid var(--card-border);
+            border-radius: 16px;
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            gap: 8px;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            outline: none;
+        }
+
+        .moazzin-select-card:hover, .moazzin-select-card:focus {
+            border-color: var(--accent-primary);
+            box-shadow: 0 0 20px var(--accent-glow);
+            transform: translateY(-3px) scale(1.02);
+            background: rgba(56, 189, 248, 0.12);
+        }
+
+        .moazzin-select-card.active-moazzin {
+            border-color: var(--accent-primary);
+            box-shadow: 0 0 25px var(--accent-glow);
+            background: linear-gradient(145deg, rgba(56, 189, 248, 0.2), rgba(10, 22, 38, 0.95));
+            transform: translateY(-3px);
+        }
+
+        .moazzin-card-icon {
+            font-size: 2rem;
+        }
+
+        .moazzin-card-name {
+            font-size: 0.98rem;
+            font-weight: 800;
+            color: #ffffff;
+        }
+
+        .moazzin-card-sub {
+            font-size: 0.78rem;
+            color: var(--text-muted);
+        }
+
+        .moazzin-actions-row {
+            display: flex;
+            gap: 6px;
+            width: 100%;
+            margin-top: 4px;
+        }
+
+        .btn-moazzin-pick {
+            flex: 1;
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid var(--card-border);
+            color: #fff;
+            padding: 5px 8px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+            outline: none;
+        }
+
+        .moazzin-select-card.active-moazzin .btn-moazzin-pick {
+            background: var(--accent-primary);
+            color: #000;
+            border-color: var(--accent-primary);
+        }
+
+        .btn-moazzin-listen {
+            background: rgba(253, 224, 71, 0.15);
+            border: 1px solid rgba(253, 224, 71, 0.4);
+            color: var(--gold);
+            padding: 5px 10px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+            outline: none;
+        }
+
+        .btn-moazzin-listen:hover, .btn-moazzin-listen:focus {
+            background: var(--gold);
+            color: #000;
+        }
+
+        /* Visual Smart Feature Switches */
+        .smart-toggles-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
+        .smart-toggle-box {
+            background: rgba(255, 255, 255, 0.04);
+            border: 1.5px solid var(--card-border);
+            border-radius: 16px;
+            padding: 14px 18px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+            outline: none;
+        }
+
+        .smart-toggle-box:hover, .smart-toggle-box:focus {
+            border-color: var(--accent-primary);
+            background: rgba(56, 189, 248, 0.1);
+        }
+
+        .toggle-meta-wrap {
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+        }
+
+        .toggle-title {
+            font-size: 1.05rem;
+            font-weight: 800;
+            color: #ffffff;
+        }
+
+        .toggle-desc {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        .toggle-status-btn {
+            background: rgba(52, 211, 153, 0.2);
+            border: 1.5px solid var(--emerald);
+            color: var(--emerald);
+            padding: 7px 18px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 800;
+            min-width: 95px;
+            text-align: center;
+            transition: all 0.2s;
+        }
+
+        .toggle-status-btn.disabled {
+            background: rgba(239, 68, 68, 0.15);
+            border-color: var(--danger);
+            color: #fca5a5;
+        }
+
+        /* Bottom Return Button in Modal */
+        .suite-modal-bottom-bar {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border-top: 1.5px solid var(--card-border);
+            padding-top: 12px;
+            gap: 20px;
+        }
+
+        .suite-close-btn-bottom {
+            background: linear-gradient(135deg, rgba(239, 68, 68, 0.2), rgba(10, 22, 38, 0.95));
+            border: 1.5px solid rgba(239, 68, 68, 0.6);
+            color: #ffffff;
+            padding: 10px 32px;
+            border-radius: 30px;
+            font-size: 1.05rem;
+            font-weight: 800;
+            font-family: 'Almarai', sans-serif;
+            cursor: pointer;
+            transition: all 0.25s;
+            outline: none;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .suite-close-btn-bottom:hover, .suite-close-btn-bottom:focus {
+            background: #ef4444;
+            color: #ffffff;
+            box-shadow: 0 0 25px rgba(239, 68, 68, 0.6);
+            transform: scale(1.05);
+        }
+
+        /* ======================== FLOATING TOAST NOTIFICATION ======================== */
+        .app-toast-pill {
+            position: fixed;
+            top: 25px;
+            left: 50%;
+            transform: translateX(-50%) translateY(-20px);
+            background: rgba(10, 22, 38, 0.95);
+            border: 1.5px solid var(--gold);
+            color: #ffffff;
+            padding: 10px 28px;
+            border-radius: 35px;
+            font-size: 1.1rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            z-index: 9999;
+            box-shadow: 0 0 30px rgba(253, 224, 71, 0.45);
+            backdrop-filter: blur(20px);
+            opacity: 0;
+            pointer-events: none;
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .app-toast-pill.visible {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+
+        /* ======================== GRAND AZAN FULLSCREEN OVERLAY ======================== */
+        .luxury-azan-screen {
+            position: fixed;
+            inset: 0;
+            background: radial-gradient(circle at 50% 30%, #17120a 0%, #080603 50%, #000000 100%);
+            z-index: 300;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 40px;
+            text-align: center;
+            gap: 22px;
+            animation: fadeIn 0.5s ease forwards;
+        }
+
+        .azan-makkah-badge {
+            font-family: 'Amiri', serif;
+            font-size: 1.5rem;
+            color: var(--gold);
+            border: 1px solid var(--gold);
+            padding: 4px 24px;
+            border-radius: 30px;
+            letter-spacing: 2px;
+            box-shadow: 0 0 25px rgba(253, 224, 71, 0.4);
+        }
+
+        .azan-grand-calligraphy {
+            font-family: 'Amiri', serif;
+            font-size: 4rem;
+            font-weight: 700;
+            color: #ffffff;
+            line-height: 1.35;
+            text-shadow: 0 0 35px rgba(253, 224, 71, 0.6);
+        }
+
+        .azan-prayer-highlight {
+            color: var(--gold);
+            text-decoration: underline;
+        }
+
+        .audio-wave-wrap {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            height: 45px;
+        }
+
+        .wave-bar {
+            width: 7px;
+            background: linear-gradient(180deg, var(--gold), var(--accent-primary));
+            border-radius: 4px;
+            animation: waveAnim 1.2s ease-in-out infinite alternate;
+        }
+        .wave-bar:nth-child(1) { height: 18px; animation-delay: 0.1s; }
+        .wave-bar:nth-child(2) { height: 35px; animation-delay: 0.3s; }
+        .wave-bar:nth-child(3) { height: 48px; animation-delay: 0.5s; }
+        .wave-bar:nth-child(4) { height: 26px; animation-delay: 0.2s; }
+        .wave-bar:nth-child(5) { height: 42px; animation-delay: 0.4s; }
+        .wave-bar:nth-child(6) { height: 20px; animation-delay: 0.6s; }
+        .wave-bar:nth-child(7) { height: 32px; animation-delay: 0.15s; }
+
+        @keyframes waveAnim {
+            0% { transform: scaleY(0.3); }
+            100% { transform: scaleY(1.15); }
+        }
+
+        .iqama-countdown-card {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--card-border);
+            padding: 12px 30px;
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .iqama-label-text {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--text-muted);
+        }
+
+        .iqama-time-display {
+            font-family: 'Readex Pro', sans-serif;
+            font-size: 2.2rem;
+            font-weight: 800;
+            color: var(--emerald);
+            direction: ltr !important;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .post-azan-duaa-text {
+            font-family: 'Amiri', serif;
+            font-size: 1.45rem;
+            color: var(--gold);
+            max-width: 900px;
+            line-height: 1.6;
+            opacity: 0.95;
+        }
+
+        .btn-dismiss-azan {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid var(--card-border);
+            color: #fff;
+            padding: 10px 32px;
+            border-radius: 30px;
+            font-size: 1.1rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+            outline: none;
+        }
+        .btn-dismiss-azan:hover, .btn-dismiss-azan:focus {
+            background: var(--gold);
+            color: #000;
+            transform: scale(1.05);
+        }
+    </style>
+</head>
+<body>
+    <canvas id="snowCanvas"></canvas>
+    <div class="ambient-orb orb-1"></div>
+
+    <!-- Floating Global Toast -->
+    <div class="app-toast-pill" id="appToast">
+        <span id="toastIcon">✨</span>
+        <span id="toastText">إشعار</span>
+    </div>
+
+    <div class="app-container">
+        <!-- HEADER -->
+        <header>
+            <div class="header-meta-left">
+                <div class="winter-badge">
+                    <svg viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
+                    <span class="winter-title" id="locationTitle">جمهورية مصر العربية - القاهرة ❄️</span>
+                </div>
+                <div class="weather-pill" id="weatherWidget">
+                    <span>الطقس:</span>
+                    <span class="weather-temp" id="weatherTemp">24°C</span>
+                </div>
+                <div class="smart-notification-pill" id="smartNotifPill">
+                    <span id="smartNotifIcon">🌙</span>
+                    <span id="smartNotifText">تذكير</span>
+                </div>
+            </div>
+
+            <div class="bismillah-center">
+                بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ
+            </div>
+
+            <div class="header-meta-right">
+                <div class="hijri-date-text" id="hijriDisplay">-- هـ</div>
+                <div class="gregorian-date-text" id="gregDisplay">-- م</div>
+            </div>
+        </header>
+
+        <!-- MAIN -->
+        <main>
+            <!-- Strict LTR Rock-Solid Grand Wall Clock -->
+            <div class="clock-wrapper" dir="ltr" style="direction: ltr !important;">
+                <div class="grand-clock" dir="ltr" style="direction: ltr !important;">
+                    <span class="digit-box" id="hoursVal" dir="ltr">--</span>
+                    <span class="clock-colon">:</span>
+                    <span class="digit-box" id="minutesVal" dir="ltr">--</span>
+                </div>
+                <div class="clock-sub-meta" style="direction: rtl !important;">
+                    <div class="clock-seconds-box" id="secondsVal" dir="ltr">--</div>
+                    <div class="clock-ampm-text" id="ampmVal">--</div>
+                </div>
+            </div>
+
+            <!-- Next Prayer Ribbon -->
+            <div class="hero-next-prayer-banner">
+                <span class="next-tag">الصلاة القادمة:</span>
+                <div class="next-prayer-title">
+                    <span id="nextPrayerIcon">⏳</span>
+                    <span id="nextPrayerName">--</span>
+                </div>
+                <div class="countdown-digits" id="countdownTimer" dir="ltr" style="direction: ltr !important;">--:--:--</div>
+            </div>
+
+            <!-- Prayers Grid -->
+            <div class="prayers-grid-container">
+                <div class="prayer-glass-card" id="card-fajr">
+                    <div class="card-icon-wrap">🌙</div>
+                    <div class="card-prayer-name">الفجر</div>
+                    <div class="card-prayer-time" id="time-fajr">--:--</div>
+                    <span class="card-badge" id="badge-fajr">مواقيت</span>
+                </div>
+
+                <div class="prayer-glass-card" id="card-sunrise">
+                    <div class="card-icon-wrap">🌅</div>
+                    <div class="card-prayer-name">الشروق</div>
+                    <div class="card-prayer-time" id="time-sunrise">--:--</div>
+                    <span class="card-badge" id="badge-sunrise">شروق</span>
+                </div>
+
+                <div class="prayer-glass-card" id="card-dhuhr">
+                    <div class="card-icon-wrap">☀️</div>
+                    <div class="card-prayer-name">الظهر</div>
+                    <div class="card-prayer-time" id="time-dhuhr">--:--</div>
+                    <span class="card-badge" id="badge-dhuhr">مواقيت</span>
+                </div>
+
+                <div class="prayer-glass-card" id="card-asr">
+                    <div class="card-icon-wrap">🌤️</div>
+                    <div class="card-prayer-name">العصر</div>
+                    <div class="card-prayer-time" id="time-asr">--:--</div>
+                    <span class="card-badge" id="badge-asr">مواقيت</span>
+                </div>
+
+                <div class="prayer-glass-card" id="card-maghrib">
+                    <div class="card-icon-wrap">🌇</div>
+                    <div class="card-prayer-name">المغرب</div>
+                    <div class="card-prayer-time" id="time-maghrib">--:--</div>
+                    <span class="card-badge" id="badge-maghrib">مواقيت</span>
+                </div>
+
+                <div class="prayer-glass-card" id="card-isha">
+                    <div class="card-icon-wrap">🌌</div>
+                    <div class="card-prayer-name">العشاء</div>
+                    <div class="card-prayer-time" id="time-isha">--:--</div>
+                    <span class="card-badge" id="badge-isha">مواقيت</span>
+                </div>
+            </div>
+        </main>
+
+        <!-- FOOTER: 100% Guaranteed Clickable & D-Pad Remote Ready -->
+        <footer>
+            <div class="footer-action-pills">
+                <button class="action-pill-btn" onclick="openQuranSuite('radios')" tabindex="0">
+                    <span>📻</span> إذاعات القرآن المباشرة (القاهرة)
+                </button>
+                <button class="action-pill-btn" onclick="openQuranSuite('reciters')" tabindex="0">
+                    <span>📖</span> تلاوات المصحف الشريف
+                </button>
+                <button class="action-pill-btn" id="btnFooterSettings" onclick="openQuranSuite('settings')" tabindex="0">
+                    <span>⚙️</span> إعدادات وثيمات
+                </button>
+                <button class="action-pill-btn" onclick="toggleNightDim()" tabindex="0">
+                    <span id="dimIcon">🌙</span> وضع السكون
+                </button>
+                <button class="action-pill-btn" onclick="toggleFullScreen()" tabindex="0">
+                    <span>⛶</span> ملء الشاشة [OK]
+                </button>
+            </div>
+
+            <!-- Time-Aware Dynamic Athkar Display -->
+            <div class="athkar-marquee" id="athkarDisplay" onclick="nextAthkar()" title="اضغط للتالي">
+                "أَصْبَحْنَا وَأَصْبَحَ الْمُلْكُ لِلَّهِ ، وَالْحَمْدُ لِلَّهِ"
+            </div>
+        </footer>
+    </div> <!-- End .app-container -->
+
+    <!-- ======================== LUXURY QURAN & RADIO SUITE MODAL ======================== -->
+    <div class="quran-suite-modal" id="quranSuiteModal">
+        <div class="suite-top-bar">
+            <div class="suite-title-badge">
+                <span>✨</span> روائع إذاعات القرآن الكريم والتلاوات المباركة
+            </div>
+            <div class="suite-nav-tabs">
+                <button class="suite-tab-btn active" id="tabBtnRadios" onclick="switchSuiteTab('radios')" tabindex="0">
+                    <span>📻</span> الإذاعات المباشرة (8 قنوات)
+                </button>
+                <button class="suite-tab-btn" id="tabBtnReciters" onclick="switchSuiteTab('reciters')" tabindex="0">
+                    <span>📖</span> المصحف المرتل (200+ قارئ)
+                </button>
+                <button class="suite-tab-btn" id="tabBtnSettings" onclick="switchSuiteTab('settings')" tabindex="0">
+                    <span>⚙️</span> خيارات المؤذن والمظهر
+                </button>
+            </div>
+            <button class="suite-close-btn" onclick="closeQuranSuite()" tabindex="0">
+                <span>✕</span> إغلاق والعودة للساعة [Back]
+            </button>
+        </div>
+
+        <div class="suite-content-stage">
+            <!-- TAB 1: 8 LUXURY LIVE RADIOS -->
+            <div class="radios-grid" id="stageRadios">
+                <!-- 1. Cairo Quran Radio -->
+                <div class="radio-channel-card" id="cardRadioCairo" onclick="playLiveRadio('cairo')" tabindex="0">
+                    <div class="radio-top-meta">
+                        <span class="radio-freq-badge">98.8 FM</span>
+                        <div class="radio-live-tag"><span class="radio-live-dot"></span> مباشر</div>
+                    </div>
+                    <div class="radio-card-icon">🎙️</div>
+                    <div class="radio-card-name">إذاعة القرآن الكريم من القاهرة</div>
+                    <div class="radio-card-desc">البث الرسمي المباشر 24 ساعة - جمهورية مصر العربية</div>
+                    <div class="radio-play-btn" id="btnRadioCairo">تشغيل البث المباشر ▶</div>
+                </div>
+
+                <!-- 2. Minshawi Radio -->
+                <div class="radio-channel-card" id="cardRadioMinshawi" onclick="playLiveRadio('minshawi')" tabindex="0">
+                    <div class="radio-top-meta">
+                        <span class="radio-freq-badge">خاشعة</span>
+                        <div class="radio-live-tag"><span class="radio-live-dot"></span> مباشر</div>
+                    </div>
+                    <div class="radio-card-icon">📖</div>
+                    <div class="radio-card-name">إذاعة الشيخ محمد صديق المنشاوي</div>
+                    <div class="radio-card-desc">تلاوات خاشعة نادرة للمصحف المرتل والمجود</div>
+                    <div class="radio-play-btn" id="btnRadioMinshawi">تشغيل الإذاعة ▶</div>
+                </div>
+
+                <!-- 3. Abdulbasit Radio -->
+                <div class="radio-channel-card" id="cardRadioBasit" onclick="playLiveRadio('basit')" tabindex="0">
+                    <div class="radio-top-meta">
+                        <span class="radio-freq-badge">تجويد</span>
+                        <div class="radio-live-tag"><span class="radio-live-dot"></span> مباشر</div>
+                    </div>
+                    <div class="radio-card-icon">✨</div>
+                    <div class="radio-card-name">إذاعة الشيخ عبد الباسط عبد الصمد</div>
+                    <div class="radio-card-desc">الحنجرة الذهبية وروائع التلاوة والتجويد الخالدة</div>
+                    <div class="radio-play-btn" id="btnRadioBasit">تشغيل الإذاعة ▶</div>
+                </div>
+
+                <!-- 4. Hussary Radio -->
+                <div class="radio-channel-card" id="cardRadioHussary" onclick="playLiveRadio('hussary')" tabindex="0">
+                    <div class="radio-top-meta">
+                        <span class="radio-freq-badge">مرتل</span>
+                        <div class="radio-live-tag"><span class="radio-live-dot"></span> مباشر</div>
+                    </div>
+                    <div class="radio-card-icon">🕌</div>
+                    <div class="radio-card-name">إذاعة الشيخ محمود خليل الحصري</div>
+                    <div class="radio-card-desc">شيخ عموم المقارئ المصرية - أحكام وإتقان الترتيل</div>
+                    <div class="radio-play-btn" id="btnRadioHussary">تشغيل الإذاعة ▶</div>
+                </div>
+
+                <!-- 5. Alafasy Radio -->
+                <div class="radio-channel-card" id="cardRadioAlafasy" onclick="playLiveRadio('alafasy')" tabindex="0">
+                    <div class="radio-top-meta">
+                        <span class="radio-freq-badge">عذب</span>
+                        <div class="radio-live-tag"><span class="radio-live-dot"></span> مباشر</div>
+                    </div>
+                    <div class="radio-card-icon">🎧</div>
+                    <div class="radio-card-name">إذاعة الشيخ مشاري راشد العفاسي</div>
+                    <div class="radio-card-desc">المصحف الشريف كاملاً بأعذب وأجمل التلاوات</div>
+                    <div class="radio-play-btn" id="btnRadioAlafasy">تشغيل الإذاعة ▶</div>
+                </div>
+
+                <!-- 6. Maher Radio -->
+                <div class="radio-channel-card" id="cardRadioMaher" onclick="playLiveRadio('maher')" tabindex="0">
+                    <div class="radio-top-meta">
+                        <span class="radio-freq-badge">الحرم</span>
+                        <div class="radio-live-tag"><span class="radio-live-dot"></span> مباشر</div>
+                    </div>
+                    <div class="radio-card-icon">🕋</div>
+                    <div class="radio-card-name">إذاعة الشيخ ماهر المعيقلي</div>
+                    <div class="radio-card-desc">تلاوات الحرم المكي الشريف وأجواء السكينة والخشوع</div>
+                    <div class="radio-play-btn" id="btnRadioMaher">تشغيل الإذاعة ▶</div>
+                </div>
+
+                <!-- 7. Roqiah & Athkar Radio -->
+                <div class="radio-channel-card" id="cardRadioRoqiah" onclick="playLiveRadio('roqiah')" tabindex="0">
+                    <div class="radio-top-meta">
+                        <span class="radio-freq-badge">تحصين</span>
+                        <div class="radio-live-tag"><span class="radio-live-dot"></span> مباشر</div>
+                    </div>
+                    <div class="radio-card-icon">🛡️</div>
+                    <div class="radio-card-name">إذاعة الرقية الشرعية والسكينة</div>
+                    <div class="radio-card-desc">آيات الشفاء والتحصين والبركة للمنزل والأهل</div>
+                    <div class="radio-play-btn" id="btnRadioRoqiah">تشغيل الإذاعة ▶</div>
+                </div>
+
+                <!-- 8. Mix Great Reciters Radio -->
+                <div class="radio-channel-card" id="cardRadioMix" onclick="playLiveRadio('mix')" tabindex="0">
+                    <div class="radio-top-meta">
+                        <span class="radio-freq-badge">مختارات</span>
+                        <div class="radio-live-tag"><span class="radio-live-dot"></span> مباشر</div>
+                    </div>
+                    <div class="radio-card-icon">📻</div>
+                    <div class="radio-card-name">إذاعة روائع التلاوات الخاشعة</div>
+                    <div class="radio-card-desc">مختارات كبار قراء العالم الإسلامي على مدار الساعة</div>
+                    <div class="radio-play-btn" id="btnRadioMix">تشغيل الإذاعة ▶</div>
+                </div>
+            </div>
+
+            <!-- TAB 2: RECITERS & 114 SURAHS (MP3QURAN API) -->
+            <div class="reciter-stage-wrap" id="stageReciters" style="display:none;">
+                <!-- Quick Access Top Reciters -->
+                <div class="quick-reciter-scroll">
+                    <span style="font-weight:700; color:var(--gold); font-size:0.9rem; padding-left:6px;">أشهر القراء:</span>
+                    <button class="quick-reciter-pill active" onclick="selectQuickReciter(0)" tabindex="0">الشيخ مشاري العفاسي</button>
+                    <button class="quick-reciter-pill" onclick="selectQuickReciter(1)" tabindex="0">الشيخ عبد الباسط (مرتل)</button>
+                    <button class="quick-reciter-pill" onclick="selectQuickReciter(2)" tabindex="0">الشيخ عبد الباسط (مُجوّد)</button>
+                    <button class="quick-reciter-pill" onclick="selectQuickReciter(5)" tabindex="0">الشيخ محمد صديق المنشاوي</button>
+                    <button class="quick-reciter-pill" onclick="selectQuickReciter(4)" tabindex="0">الشيخ محمود خليل الحصري</button>
+                    <button class="quick-reciter-pill" onclick="selectQuickReciter(3)" tabindex="0">الشيخ ماهر المعيقلي</button>
+                    <button class="quick-reciter-pill" onclick="selectQuickReciter(7)" tabindex="0">الشيخ ياسر الدوسري</button>
+                    <button class="quick-reciter-pill" onclick="selectQuickReciter(8)" tabindex="0">الشيخ أحمد العجمي</button>
+                    <button class="quick-reciter-pill" onclick="selectQuickReciter(10)" tabindex="0">الشيخ عبد الرحمن السديس</button>
+                    <button class="quick-reciter-pill" onclick="selectQuickReciter(11)" tabindex="0">الشيخ سعود الشريم</button>
+                </div>
+
+                <div class="selectors-row">
+                    <div class="custom-select-box">
+                        <label><span>📖</span> اختر القارئ (أكثر من 200 قارئ معتمد):</label>
+                        <select id="reciterSelect" onchange="onReciterChanged()" tabindex="0">
+                        </select>
+                    </div>
+
+                    <div class="custom-select-box">
+                        <label><span>۞</span> اختر السورة الكريمة (114 سورة كاملة):</label>
+                        <select id="surahSelect" onchange="onSurahChanged()" tabindex="0">
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Hi-Fi Master Audio Player Bar -->
+                <div class="quran-master-player-bar">
+                    <div class="player-top-row">
+                        <div class="track-meta">
+                            <div class="track-title" id="nowPlayingSurah">سورة الفاتحة</div>
+                            <div class="track-sub" id="nowPlayingReciter">الشيخ مشاري راشد العفاسي</div>
+                        </div>
+
+                        <!-- Equalizer Animation -->
+                        <div class="audio-visualizer-bars" id="audioVizBars">
+                            <span></span><span></span><span></span><span></span><span></span>
+                        </div>
+
+                        <div class="player-actions-cluster">
+                            <button class="suite-btn-step" onclick="prevSurah()" title="السورة السابقة" tabindex="0">⏮️</button>
+                            <button class="suite-btn-play" id="quranPlayBtn" onclick="toggleQuranPlay()" title="تشغيل / إيقاف" tabindex="0">▶</button>
+                            <button class="suite-btn-step" onclick="nextSurah()" title="السورة التالية" tabindex="0">⏭️</button>
+                            <button class="suite-btn-repeat" id="repeatToggleBtn" onclick="toggleRepeat()" tabindex="0">تكرار 🔁</button>
+                        </div>
+                    </div>
+
+                    <!-- Seekable Audio Progress Bar -->
+                    <div class="player-progress-container">
+                        <span class="player-time-label" id="currentTimeLabel">00:00</span>
+                        <input type="range" class="player-seek-bar" id="playerSeekBar" value="0" min="0" max="100" step="0.5" oninput="onSeekInput()" tabindex="0">
+                        <span class="player-time-label" id="totalDurationLabel">--:--</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 3: VISUAL INTERACTIVE SETTINGS (NO BROKEN DROPDOWNS) -->
+            <div class="settings-master-container" id="stageSettings" style="display:none;">
+                <!-- 1. THEME SWITCHER CARDS -->
+                <div class="settings-section-card">
+                    <div class="settings-section-title">
+                        <span>🎨</span> مظهر وثيم الشاشة (اضغط لاختيار الثيم فوراً)
+                    </div>
+                    <div class="theme-cards-row">
+                        <!-- Theme 1: Winter -->
+                        <div class="theme-select-card active-theme" id="cardThemeWinter" onclick="applyTheme('winter')" tabindex="0">
+                            <div class="theme-card-icon">❄️</div>
+                            <div class="theme-card-title">الثيم الشتوي الجليدي</div>
+                            <div class="theme-card-desc">أزرق سماوي مع تساقط ناعم لجزيئات الثلج 60fps</div>
+                            <div class="theme-status-tag" id="tagThemeWinter">✔ مفعّل الآن</div>
+                        </div>
+
+                        <!-- Theme 2: Kaaba Gold -->
+                        <div class="theme-select-card" id="cardThemeKaaba" onclick="applyTheme('kaaba')" tabindex="0">
+                            <div class="theme-card-icon">🕋</div>
+                            <div class="theme-card-title">الثيم الملكي الذهبي (كسوة الكعبة)</div>
+                            <div class="theme-card-desc">فخامة الأسود الملكي مع البريق الذهبي الخالص</div>
+                            <div class="theme-status-tag" id="tagThemeKaaba">اضغط للتفعيل</div>
+                        </div>
+
+                        <!-- Theme 3: Midnight -->
+                        <div class="theme-select-card" id="cardThemeMidnight" onclick="applyTheme('midnight')" tabindex="0">
+                            <div class="theme-card-icon">🌙</div>
+                            <div class="theme-card-title">ثيم السكينة والليل الهادئ</div>
+                            <div class="theme-card-desc">كحلي غامق مريح للعين بدون إجهاد في الظلام</div>
+                            <div class="theme-status-tag" id="tagThemeMidnight">اضغط للتفعيل</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 2. MOAZZIN VOICE CARDS -->
+                <div class="settings-section-card">
+                    <div class="settings-section-title">
+                        <span>🎙️</span> صوت المؤذن المفضل (اختر المؤذن أو استمع لتجربة الصوت)
+                    </div>
+                    <div class="moazzin-cards-row">
+                        <!-- Makkah -->
+                        <div class="moazzin-select-card active-moazzin" id="cardMoazzinMakkah" tabindex="0">
+                            <div class="moazzin-card-icon">🕋</div>
+                            <div class="moazzin-card-name">أذان الحرم المكي الشريف</div>
+                            <div class="moazzin-card-sub">الشيخ علي ملا</div>
+                            <div class="moazzin-actions-row">
+                                <button class="btn-moazzin-pick" onclick="applyMoazzin('makkah')" tabindex="0">اختيار ✔</button>
+                                <button class="btn-moazzin-listen" onclick="testPlayMoazzin('makkah')" tabindex="0">استماع 🔊</button>
+                            </div>
+                        </div>
+
+                        <!-- Madinah -->
+                        <div class="moazzin-select-card" id="cardMoazzinMadinah" tabindex="0">
+                            <div class="moazzin-card-icon">🕌</div>
+                            <div class="moazzin-card-name">أذان المسجد النبوي الشريف</div>
+                            <div class="moazzin-card-sub">المدينة المنورة</div>
+                            <div class="moazzin-actions-row">
+                                <button class="btn-moazzin-pick" onclick="applyMoazzin('madinah')" tabindex="0">اختيار ✔</button>
+                                <button class="btn-moazzin-listen" onclick="testPlayMoazzin('madinah')" tabindex="0">استماع 🔊</button>
+                            </div>
+                        </div>
+
+                        <!-- Abdulbasit -->
+                        <div class="moazzin-select-card" id="cardMoazzinAbdulbasit" tabindex="0">
+                            <div class="moazzin-card-icon">✨</div>
+                            <div class="moazzin-card-name">الشيخ عبد الباسط عبد الصمد</div>
+                            <div class="moazzin-card-sub">تسجيل نادر تاريخي</div>
+                            <div class="moazzin-actions-row">
+                                <button class="btn-moazzin-pick" onclick="applyMoazzin('abdulbasit')" tabindex="0">اختيار ✔</button>
+                                <button class="btn-moazzin-listen" onclick="testPlayMoazzin('abdulbasit')" tabindex="0">استماع 🔊</button>
+                            </div>
+                        </div>
+
+                        <!-- Alafasy -->
+                        <div class="moazzin-select-card" id="cardMoazzinAlafasy" tabindex="0">
+                            <div class="moazzin-card-icon">🎧</div>
+                            <div class="moazzin-card-name">الشيخ مشاري راشد العفاسي</div>
+                            <div class="moazzin-card-sub">أذان ندي عذب</div>
+                            <div class="moazzin-actions-row">
+                                <button class="btn-moazzin-pick" onclick="applyMoazzin('alafasy')" tabindex="0">اختيار ✔</button>
+                                <button class="btn-moazzin-listen" onclick="testPlayMoazzin('alafasy')" tabindex="0">استماع 🔊</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 3. SMART FEATURES INTERACTIVE SWITCHES -->
+                <div class="settings-section-card">
+                    <div class="settings-section-title">
+                        <span>⚡</span> الميزات الذكية (اضغط لتشغيل أو إيقاف الميزة)
+                    </div>
+                    <div class="smart-toggles-row">
+                        <!-- Toggle Pre-Azan -->
+                        <div class="smart-toggle-box" onclick="toggleSmartFeature('pre_azan')" tabindex="0">
+                            <div class="toggle-meta-wrap">
+                                <div class="toggle-title">تنبيه الاستعداد للوضوء قبل الأذان</div>
+                                <div class="toggle-desc">إشعار هادئ على الشاشة قبل موعد الصلاة بـ 10 دقائق للتجهز</div>
+                            </div>
+                            <div class="toggle-status-btn" id="btnTogglePreAzan">مفعل ✅</div>
+                        </div>
+
+                        <!-- Toggle Auto-Dim -->
+                        <div class="smart-toggle-box" onclick="toggleSmartFeature('auto_dim')" tabindex="0">
+                            <div class="toggle-meta-wrap">
+                                <div class="toggle-title">التعتيم الليلي التلقائي</div>
+                                <div class="toggle-desc">تخفيض إضاءة الشاشة تلقائياً بعد 11:30 مساءً لراحة العين</div>
+                            </div>
+                            <div class="toggle-status-btn" id="btnToggleAutoDim">مفعل ✅</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- MODAL BOTTOM BAR -->
+        <div class="suite-modal-bottom-bar">
+            <button class="suite-close-btn-bottom" onclick="closeQuranSuite()" tabindex="0">
+                <span>✕</span> العودة إلى شاشة الساعة والمواقيت [Back]
+            </button>
+        </div>
+    </div>
+
+    <!-- Fullscreen Grand Azan Overlay Modal -->
+    <div class="luxury-azan-screen" id="azanScreen">
+        <div class="azan-makkah-badge">نداء الصلاة المبارك</div>
+        <div class="azan-grand-calligraphy">
+            اللهُ أَكْبَر .. اللهُ أَكْبَر<br>
+            حَانَ الآنَ مَوْعِدُ أَذَانِ <span class="azan-prayer-highlight" id="azanModalTarget">الظهر</span>
+        </div>
+
+        <div class="audio-wave-wrap">
+            <div class="wave-bar"></div>
+            <div class="wave-bar"></div>
+            <div class="wave-bar"></div>
+            <div class="wave-bar"></div>
+            <div class="wave-bar"></div>
+            <div class="wave-bar"></div>
+            <div class="wave-bar"></div>
+        </div>
+
+        <div class="iqama-countdown-card">
+            <span class="iqama-label-text">المتبقي على إقامة الصلاة:</span>
+            <span class="iqama-time-display" id="iqamaDisplay">15:00</span>
+        </div>
+
+        <div class="post-azan-duaa-text">
+            "اللَّهُمَّ رَبَّ هَذِهِ الدَّعْوَةِ التَّامَّةِ ، وَالصَّلَاةِ الْقَائِمَةِ ، آتِ مُحَمَّداً الْوَسِيلَةَ وَالْفَضِيلَةَ ، وَابْعَثْهُ مَقَاماً مَحْمُوداً الَّذِي وَعَدْتَهُ"
+        </div>
+
+        <button class="btn-dismiss-azan" onclick="closeAzanScreen()" tabindex="0">إغلاق النافذة [رجوع / Back]</button>
+    </div>
+
+    <!-- Audio Elements -->
+    <audio id="azanAudioPlayer" preload="auto">
+        <source src="https://server8.mp3quran.net/athan/01.mp3" type="audio/mpeg">
+    </audio>
+    <audio id="quranAudioPlayer" preload="none"></audio>
+    <audio id="radioAudioPlayer" preload="none"></audio>
+
+    <script>
+        // ======================== 1. SAFE LOCAL STORAGE & SYSTEM UTILITIES ========================
+        const safeStorage = {
+            set: function(key, val) {
+                try { localStorage.setItem(key, String(val)); } catch(e) {}
+            },
+            get: function(key, fallback) {
+                try {
+                    const res = localStorage.getItem(key);
+                    return res !== null ? res : fallback;
+                } catch(e) {
+                    return fallback;
+                }
+            }
+        };
+
+        let toastTimeout = null;
+        function showToast(message, icon) {
+            const toast = document.getElementById('appToast');
+            const toastText = document.getElementById('toastText');
+            const toastIcon = document.getElementById('toastIcon');
+            if (!toast) return;
+
+            toastText.innerText = message;
+            if (icon) toastIcon.innerText = icon;
+            toast.classList.add('visible');
+
+            if (toastTimeout) clearTimeout(toastTimeout);
+            toastTimeout = setTimeout(() => {
+                toast.classList.remove('visible');
+            }, 2500);
+        }
+
+        // ======================== 2. WINTER SNOW ENGINE (INITIALIZED FIRST) ========================
+        const canvas = document.getElementById('snowCanvas');
+        const ctx = canvas.getContext('2d');
+        let width, height;
+        let isSnowActive = true;
+        let snowAnimId = null;
+
+        function resizeCanvas() {
+            width = canvas.width = window.innerWidth;
+            height = canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        const flakes = [];
+        const FLAKE_COUNT = 75;
+
+        for (let i = 0; i < FLAKE_COUNT; i++) {
+            flakes.push({
+                x: Math.random() * window.innerWidth,
+                y: Math.random() * window.innerHeight,
+                r: Math.random() * 2.8 + 0.8,
+                d: Math.random() * FLAKE_COUNT,
+                speedY: Math.random() * 0.7 + 0.4,
+                speedX: Math.random() * 0.5 - 0.25,
+                opacity: Math.random() * 0.6 + 0.25
+            });
+        }
+
+        function renderSnow() {
+            if (!isSnowActive) {
+                if (snowAnimId) cancelAnimationFrame(snowAnimId);
+                return;
+            }
+            ctx.clearRect(0, 0, width, height);
+            ctx.fillStyle = "rgba(255, 255, 255, 0.75)";
+            ctx.beginPath();
+            for (let i = 0; i < FLAKE_COUNT; i++) {
+                const f = flakes[i];
+                ctx.moveTo(f.x, f.y);
+                ctx.arc(f.x, f.y, f.r, 0, Math.PI * 2, true);
+            }
+            ctx.fill();
+
+            for (let i = 0; i < FLAKE_COUNT; i++) {
+                const f = flakes[i];
+                f.y += f.speedY;
+                f.x += f.speedX;
+
+                if (f.y > height) {
+                    f.y = -5;
+                    f.x = Math.random() * width;
+                }
+                if (f.x > width) f.x = 0;
+                else if (f.x < 0) f.x = width;
+            }
+            snowAnimId = requestAnimationFrame(renderSnow);
+        }
+        renderSnow();
+
+        // ======================== 3. CAIRO TIME CLOCK SYNC ENGINE ========================
+        let cairoTimeOffsetMs = 0;
+        let isTimeSynced = false;
+
+        async function syncOfficialCairoTime() {
+            try {
+                const startLocal = Date.now();
+                const res = await fetch('https://timeapi.io/api/time/current/zone?timeZone=Africa/Cairo', { cache: 'no-store' });
+                if (!res.ok) throw new Error("Time API unavailable");
+                const data = await res.json();
+                const apiTime = new Date(data.dateTime).getTime();
+                const latency = (Date.now() - startLocal) / 2;
+                cairoTimeOffsetMs = (apiTime + latency) - Date.now();
+                isTimeSynced = true;
+            } catch (err) {
+                const now = new Date();
+                const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
+                const cairoFallback = new Date(utc + (3600000 * 2)); // Cairo UTC+2
+                cairoTimeOffsetMs = cairoFallback.getTime() - Date.now();
+            }
+        }
+        syncOfficialCairoTime();
+        setInterval(syncOfficialCairoTime, 30 * 60 * 1000);
+
+        function getNowCairo() {
+            return new Date(Date.now() + cairoTimeOffsetMs);
+        }
+
+        const hoursEl = document.getElementById('hoursVal');
+        const minutesEl = document.getElementById('minutesVal');
+        const secondsEl = document.getElementById('secondsVal');
+        const ampmEl = document.getElementById('ampmVal');
+
+        function updateClockDisplay() {
+            const now = getNowCairo();
+            let rawHours = now.getHours();
+            const rawMinutes = now.getMinutes();
+            const rawSeconds = now.getSeconds();
+
+            const isPM = rawHours >= 12;
+            const ampmStr = isPM ? "م" : "ص";
+            let displayHours = rawHours % 12;
+            if (displayHours === 0) displayHours = 12;
+
+            hoursEl.innerText = String(displayHours).padStart(2, '0');
+            minutesEl.innerText = String(rawMinutes).padStart(2, '0');
+            secondsEl.innerText = String(rawSeconds).padStart(2, '0');
+            ampmEl.innerText = ampmStr;
+
+            updateCalendarDates(now);
+            checkPrayerSchedule(now);
+            checkAutoNightDim(now);
+        }
+        setInterval(updateClockDisplay, 500);
+
+        // ======================== 4. CALENDAR & DATES ========================
+        let lastDayUpdated = -1;
+        function updateCalendarDates(now) {
+            const currentDay = now.getDate();
+            if (currentDay === lastDayUpdated) return;
+            lastDayUpdated = currentDay;
+
+            try {
+                const gregFormatter = new Intl.DateTimeFormat('ar-EG', {
+                    weekday: 'long',
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric'
+                });
+                document.getElementById('gregDisplay').innerText = gregFormatter.format(now);
+
+                const hijriFormatter = new Intl.DateTimeFormat('ar-SA-u-ca-islamic-umalqura', {
+                    day: 'numeric',
+                    month: 'long',
+                    year: 'numeric'
+                });
+                document.getElementById('hijriDisplay').innerText = hijriFormatter.format(now) + " هـ";
+
+                checkSunnahFasting(now);
+            } catch (e) {}
+        }
+
+        function checkSunnahFasting(now) {
+            const dayOfWeek = now.getDay(); // 1 = Mon, 4 = Thu
+            const pill = document.getElementById('smartNotifPill');
+            const icon = document.getElementById('smartNotifIcon');
+            const text = document.getElementById('smartNotifText');
+
+            if (dayOfWeek === 1 || dayOfWeek === 4) {
+                pill.style.display = 'flex';
+                icon.innerText = "✨";
+                text.innerText = "سُنّة اليوم: صيام " + (dayOfWeek === 1 ? "الاثنين" : "الخميس");
+            } else {
+                pill.style.display = 'none';
+            }
+        }
+
+        // ======================== 5. CAIRO WEATHER (OPEN-METEO) ========================
+        async function fetchCairoWeather() {
+            try {
+                const res = await fetch('https://api.open-meteo.com/v1/forecast?latitude=30.0444&longitude=31.2357&current=temperature_2m,weather_code');
+                const data = await res.json();
+                if (data && data.current) {
+                    const temp = Math.round(data.current.temperature_2m);
+                    document.getElementById('weatherTemp').innerText = temp + "°C";
+                }
+            } catch (e) {}
+        }
+        fetchCairoWeather();
+        setInterval(fetchCairoWeather, 60 * 60 * 1000);
+
+        // ======================== 6. ATHKAR TIME-AWARE ENGINE ========================
+        const ATHKAR_DB = {
+            morning: [
+                "أَصْبَحْنَا وَأَصْبَحَ الْمُلْكُ لِلَّهِ ، وَالْحَمْدُ لِلَّهِ",
+                "اللَّهُمَّ بِكَ أَصْبَحْنَا ، وَبِكَ أَمْسَيْنَا ، وَبِكَ نَحْيَا وَبِكَ نَمُوتُ",
+                "سُبْحَانَ اللَّهِ وَبِحَمْدِهِ ، عَدَدَ خَلْقِهِ ، وَرِضَا نَفْسِهِ ، وَزِنَةَ عَرْشِهِ",
+                "يَا حَيُّ يَا قَيُّومُ بِرَحْمَتِكَ أَسْتَغِيثُ أَصْلِحْ لِي شَأْنِي كُلَّهُ",
+                "رَضِيتُ بِاللَّهِ رَبًّا ، وَبِالْإِسْلَامِ دِينًا ، وَبِمُحَمَّدٍ نَبِيًّا"
+            ],
+            evening: [
+                "أَمْسَيْنَا وَأَمْسَى الْمُلْكُ لِلَّهِ ، وَالْحَمْدُ لِلَّهِ",
+                "اللَّهُمَّ إِنِّي أَسْأَلُكَ الْعَفْوَ وَالْعَافِيَةَ فِي الدُّنْيَا وَالْآخِرَةِ",
+                "أَعُوذُ بِكَلِمَاتِ اللَّهِ التَّامَّاتِ مِنْ شَرِّ مَا خَلَقَ",
+                "اللَّهُمَّ أَنْتَ رَبِّي لَا إِلَهَ إِلَّا أَنْتَ خَلَقْتَنِي وَأَنَا عَبْدُكَ",
+                "حَسْبِيَ اللَّهُ لَا إِلَهَ إِلَّا هُوَ عَلَيْهِ تَوَكَّلْتُ وَهُوَ رَبُّ الْعَرْشِ الْعَظِيمِ"
+            ],
+            night: [
+                "بِاسْمِكَ رَبِّي وَضَعْتُ جَنْبِي ، وَبِكَ أَرْفَعُهُ",
+                "سُبْحَانَ اللَّهِ (33) ، وَالْحَمْدُ لِلَّهِ (33) ، وَاللَّهُ أَكْبَرُ (34)",
+                "قُلْ هُوَ اللَّهُ أَحَدٌ ، وَقُلْ أَعُوذُ بِرَبِّ الْفَلَقِ ، وَقُلْ أَعُوذُ بِرَبِّ النَّاسِ",
+                "اللَّهُمَّ قِنِي عَذَابَكَ يَوْمَ تَبْعَثُ عِبَادَكَ"
+            ]
+        };
+
+        let currentAthkarIdx = 0;
+        function updateAthkarMarquee() {
+            const now = getNowCairo();
+            const h = now.getHours();
+            let bucket = 'morning';
+            if (h >= 14 && h < 22) bucket = 'evening';
+            else if (h >= 22 || h < 4) bucket = 'night';
+
+            const list = ATHKAR_DB[bucket];
+            currentAthkarIdx = (currentAthkarIdx + 1) % list.length;
+            const el = document.getElementById('athkarDisplay');
+            if (el) {
+                el.style.opacity = '0';
+                setTimeout(() => {
+                    el.innerText = '"' + list[currentAthkarIdx] + '"';
+                    el.style.opacity = '1';
+                }, 300);
+            }
+        }
+        setInterval(updateAthkarMarquee, 18000);
+        function nextAthkar() { updateAthkarMarquee(); }
+
+        // ======================== 7. PRAYER TIMES CALCULATION ========================
+        const PRAYER_KEYS = ['fajr', 'sunrise', 'dhuhr', 'asr', 'maghrib', 'isha'];
+        const PRAYER_NAMES_AR = {
+            fajr: "الفجر",
+            sunrise: "الشروق",
+            dhuhr: "الظهر",
+            asr: "العصر",
+            maghrib: "المغرب",
+            isha: "العشاء"
+        };
+        const PRAYER_ICONS = {
+            fajr: "🌙",
+            sunrise: "🌅",
+            dhuhr: "☀️",
+            asr: "🌤️",
+            maghrib: "🌇",
+            isha: "🌌"
+        };
+
+        let prayerScheduleToday = null;
+
+        async function fetchCairoPrayerTimes() {
+            try {
+                const now = getNowCairo();
+                const d = now.getDate();
+                const m = now.getMonth() + 1;
+                const y = now.getFullYear();
+
+                const url = "https://api.aladhan.com/v1/timings/" + d + "-" + m + "-" + y + "?latitude=30.0444&longitude=31.2357&method=5";
+                const res = await fetch(url);
+                const data = await res.json();
+                if (data && data.data && data.data.timings) {
+                    const timings = data.data.timings;
+                    prayerScheduleToday = {
+                        fajr: timings.Fajr.substring(0, 5),
+                        sunrise: timings.Sunrise.substring(0, 5),
+                        dhuhr: timings.Dhuhr.substring(0, 5),
+                        asr: timings.Asr.substring(0, 5),
+                        maghrib: timings.Maghrib.substring(0, 5),
+                        isha: timings.Isha.substring(0, 5)
+                    };
+                    renderPrayerTimesUI();
+                }
+            } catch (err) {
+                prayerScheduleToday = {
+                    fajr: "04:54",
+                    sunrise: "06:22",
+                    dhuhr: "11:40",
+                    asr: "14:41",
+                    maghrib: "16:59",
+                    isha: "18:18"
+                };
+                renderPrayerTimesUI();
+            }
+        }
+        fetchCairoPrayerTimes();
+        setInterval(fetchCairoPrayerTimes, 60 * 60 * 1000);
+
+        function formatTime12(time24) {
+            if (!time24) return "--:--";
+            const parts = time24.split(':');
+            let h = parseInt(parts[0], 10);
+            const m = parts[1];
+            const ampm = h >= 12 ? "م" : "ص";
+            h = h % 12;
+            if (h === 0) h = 12;
+            return String(h).padStart(2, '0') + ":" + m + " " + ampm;
+        }
+
+        function renderPrayerTimesUI() {
+            if (!prayerScheduleToday) return;
+            PRAYER_KEYS.forEach(k => {
+                const el = document.getElementById("time-" + k);
+                if (el) el.innerText = formatTime12(prayerScheduleToday[k]);
+            });
+        }
+
+        let lastAzanFiredKey = null;
+
+        function checkPrayerSchedule(now) {
+            if (!prayerScheduleToday) return;
+
+            const nowMinutes = now.getHours() * 60 + now.getMinutes();
+            const nowSec = now.getSeconds();
+
+            let nextKey = null;
+            let minDiff = Infinity;
+
+            PRAYER_KEYS.forEach(key => {
+                const parts = prayerScheduleToday[key].split(':').map(Number);
+                let prayerMin = parts[0] * 60 + parts[1];
+
+                let diff = prayerMin - nowMinutes;
+                if (diff <= 0) diff += 24 * 60;
+
+                if (diff < minDiff) {
+                    minDiff = diff;
+                    nextKey = key;
+                }
+
+                if (diff === 10 && nowSec === 0 && key !== 'sunrise') {
+                    showPreAzanReminder(key);
+                }
+
+                if (nowMinutes === prayerMin && nowSec === 0 && key !== 'sunrise') {
+                    const todayStr = now.toDateString();
+                    if (lastAzanFiredKey !== key + "-" + todayStr) {
+                        lastAzanFiredKey = key + "-" + todayStr;
+                        triggerAzan(key);
+                    }
+                }
+            });
+
+            PRAYER_KEYS.forEach(k => {
+                const card = document.getElementById("card-" + k);
+                if (card) {
+                    if (k === nextKey) card.classList.add('active-target');
+                    else card.classList.remove('active-target');
+                }
+            });
+
+            if (nextKey) {
+                document.getElementById('nextPrayerName').innerText = PRAYER_NAMES_AR[nextKey];
+                document.getElementById('nextPrayerIcon').innerText = PRAYER_ICONS[nextKey];
+
+                const parts = prayerScheduleToday[nextKey].split(':').map(Number);
+                let targetSec = (parts[0] * 3600) + (parts[1] * 60);
+                let currentSec = (now.getHours() * 3600) + (now.getMinutes() * 60) + now.getSeconds();
+                let diffSec = targetSec - currentSec;
+                if (diffSec < 0) diffSec += 24 * 3600;
+
+                const cHours = Math.floor(diffSec / 3600);
+                const cMins = Math.floor((diffSec % 3600) / 60);
+                const cSecs = diffSec % 60;
+                document.getElementById('countdownTimer').innerText = 
+                    String(cHours).padStart(2,'0') + ":" + String(cMins).padStart(2,'0') + ":" + String(cSecs).padStart(2,'0');
+            }
+        }
+
+        function showPreAzanReminder(prayerKey) {
+            if (!isPreAzanEnabled) return;
+            const notif = document.getElementById('smartNotifPill');
+            const icon = document.getElementById('smartNotifIcon');
+            const text = document.getElementById('smartNotifText');
+            if (notif) {
+                notif.style.display = 'flex';
+                if (icon) icon.innerText = "⏳";
+                if (text) text.innerText = "استعد لصلاة " + PRAYER_NAMES_AR[prayerKey] + " (متبقي 10 دقائق)";
+                setTimeout(() => { notif.style.display = 'none'; }, 60000);
+            }
+        }
+
+        // ======================== 8. CAIRO QURAN RADIO & LIVE CHANNELS ========================
+        const radioPlayer = document.getElementById('radioAudioPlayer');
+        let currentRadioPlaying = null;
+
+        const RADIO_STREAMS = {
+            cairo: "https://radio.xecod.com/station/quran-cairo",
+            minshawi: "https://backup.qurango.net/radio/mohammed_siddiq_alminshawi",
+            basit: "https://backup.qurango.net/radio/abdulbasit_abdulsamad_mojawwad",
+            hussary: "https://backup.qurango.net/radio/mahmoud_khalil_alhussary",
+            alafasy: "https://backup.qurango.net/radio/mishary_alafasi",
+            maher: "https://backup.qurango.net/radio/maher",
+            roqiah: "https://backup.qurango.net/radio/roqiah",
+            mix: "https://backup.qurango.net/radio/mix"
+        };
+
+        const RADIO_NAMES = {
+            cairo: "إذاعة القرآن الكريم من القاهرة",
+            minshawi: "إذاعة الشيخ المنشاوي",
+            basit: "إذاعة الشيخ عبد الباسط",
+            hussary: "إذاعة الشيخ الحصري",
+            alafasy: "إذاعة الشيخ مشاري العفاسي",
+            maher: "إذاعة الشيخ ماهر المعيقلي",
+            roqiah: "إذاعة الرقية الشرعية",
+            mix: "إذاعة روائع التلاوات الخاشعة"
+        };
+
+        function playLiveRadio(stationKey) {
+            unlockAudioSystem();
+            pauseQuran();
+
+            if (currentRadioPlaying === stationKey) {
+                radioPlayer.pause();
+                currentRadioPlaying = null;
+                updateRadioCardUI();
+                showToast("تم إيقاف الإذاعة مؤقتاً", "⏸");
+                return;
+            }
+
+            const streamUrl = RADIO_STREAMS[stationKey];
+            if (!streamUrl) return;
+
+            radioPlayer.src = streamUrl;
+            radioPlayer.play().then(() => {
+                currentRadioPlaying = stationKey;
+                updateRadioCardUI();
+                showToast("جاري الاستماع الآن إلى: " + RADIO_NAMES[stationKey], "📻");
+            }).catch(e => {
+                showToast("اضغط مرة أخرى بعد تفعيل صوت الشاشة", "🔊");
+            });
+        }
+
+        function updateRadioCardUI() {
+            Object.keys(RADIO_STREAMS).forEach(k => {
+                const card = document.getElementById("cardRadio" + k.charAt(0).toUpperCase() + k.slice(1));
+                const btn = document.getElementById("btnRadio" + k.charAt(0).toUpperCase() + k.slice(1));
+                if (card && btn) {
+                    if (currentRadioPlaying === k) {
+                        card.classList.add('playing');
+                        btn.innerText = "إيقاف مؤقت ⏸";
+                    } else {
+                        card.classList.remove('playing');
+                        btn.innerText = (k === 'cairo' ? "تشغيل البث المباشر ▶" : "تشغيل الإذاعة ▶");
+                    }
+                }
+            });
+        }
+
+        // ======================== 9. RECITERS & 114 SURAHS (MP3QURAN API) ========================
+        const quranPlayer = document.getElementById('quranAudioPlayer');
+        let currentReciterServer = "https://server8.mp3quran.net/afs/";
+        let isQuranPlaying = false;
+        let isRepeatActive = false;
+
+        const surahsList = [
+            "الفاتحة","البقرة","آل عمران","النساء","المائدة","الأنعام","الأعراف","الأنفال","التوبة","يونس",
+            "هود","يوسف","الرعد","إبراهيم","الحجر","النحل","الإسراء","الكهف","مريم","طه",
+            "الأنبياء","الحج","المؤمنون","النور","الفرقان","الشعراء","النمل","القصص","العنكبوت","الروم",
+            "لقمان","السجدة","الأحزاب","سبأ","فاطر","يس","الصافات","ص","الزمر","غافر",
+            "فصلت","الشورى","الزخرف","الدخان","الجاثية","الأحقاف","محمد","الفتح","الحجرات","ق",
+            "الذاريات","الطور","النجم","القمر","الرحمن","الواقعة","الحديد","المجادلة","الحشر","الممتحنة",
+            "الصف","الجمعة","المنافقون","التغابن","الطلاق","التحريم","الملك","القلم","الحاقة","المعارج",
+            "نوح","الجن","المزمل","المدثر","القيامة","الإنسان","المرسلات","النبأ","النازعات","عبس",
+            "التكوير","الانفطار","المطففين","الانشقاق","البروج","الطارق","الأعلى","الغاشية","الفجر","البلد",
+            "الشمس","الليل","الضحى","الشرح","التين","العلق","القدر","البينة","الزلزلة","العاديات",
+            "القارعة","التكاثر","العصر","الهمزة","الفيل","قريش","الماعون","الكوثر","الكافرون","النصر",
+            "المسد","الإخلاص","الفلق","الناس"
+        ];
+
+        const surahSelect = document.getElementById('surahSelect');
+        if (surahSelect) {
+            surahsList.forEach((sName, idx) => {
+                const opt = document.createElement('option');
+                opt.value = idx + 1;
+                opt.innerText = (idx + 1) + ". سورة " + sName;
+                surahSelect.appendChild(opt);
+            });
+        }
+
+        const defaultReciters = [
+            { name: "الشيخ مشاري راشد العفاسي", server: "https://server8.mp3quran.net/afs/" },
+            { name: "الشيخ عبد الباسط عبد الصمد (مرتل)", server: "https://server7.mp3quran.net/basit/" },
+            { name: "الشيخ عبد الباسط عبد الصمد (مُجوّد)", server: "https://server7.mp3quran.net/basit_mjwd/" },
+            { name: "الشيخ ماهر المعيقلي", server: "https://server12.mp3quran.net/maher/" },
+            { name: "الشيخ محمود خليل الحصري", server: "https://server13.mp3quran.net/husr/" },
+            { name: "الشيخ محمد صديق المنشاوي (مرتل)", server: "https://server10.mp3quran.net/minsh/" },
+            { name: "الشيخ محمد صديق المنشاوي (مُجوّد)", server: "https://server10.mp3quran.net/minsh_mjwd/" },
+            { name: "الشيخ ياسر الدوسري", server: "https://server11.mp3quran.net/yasser/" },
+            { name: "الشيخ أحمد بن علي العجمي", server: "https://server10.mp3quran.net/ajm/" },
+            { name: "الشيخ سعد الغامدي", server: "https://server7.mp3quran.net/s_gmd/" },
+            { name: "الشيخ عبد الرحمن السديس", server: "https://server11.mp3quran.net/sds/" },
+            { name: "الشيخ سعود الشريم", server: "https://server7.mp3quran.net/shur/" },
+            { name: "الشيخ فارس عباد", server: "https://server8.mp3quran.net/frs_a/" },
+            { name: "الشيخ ناصر القطامي", server: "https://server6.mp3quran.net/qtm/" },
+            { name: "الشيخ إدريس أبكر", server: "https://server6.mp3quran.net/abkr/" }
+        ];
+
+        const reciterSelect = document.getElementById('reciterSelect');
+
+        function populateReciters(list) {
+            if (!reciterSelect) return;
+            reciterSelect.innerHTML = "";
+            list.forEach(rec => {
+                const opt = document.createElement('option');
+                opt.value = rec.server;
+                opt.innerText = rec.name;
+                reciterSelect.appendChild(opt);
+            });
+            currentReciterServer = list[0].server;
+        }
+        populateReciters(defaultReciters);
+
+        async function fetchAllRecitersFromApi() {
+            try {
+                const res = await fetch('https://www.mp3quran.net/api/v3/reciters?language=ar');
+                const data = await res.json();
+                if (data && data.reciters && data.reciters.length > 0) {
+                    const mapped = data.reciters
+                        .filter(r => r.moshaf && r.moshaf.length > 0 && r.moshaf[0].server)
+                        .map(r => ({ name: r.name, server: r.moshaf[0].server }));
+                    if (mapped.length > 0) populateReciters(mapped);
+                }
+            } catch (e) {}
+        }
+        fetchAllRecitersFromApi();
+
+        function selectQuickReciter(idx) {
+            const rec = defaultReciters[idx];
+            if (!rec) return;
+
+            document.querySelectorAll('.quick-reciter-pill').forEach((pill, pIdx) => {
+                if (pIdx === idx) pill.classList.add('active');
+                else pill.classList.remove('active');
+            });
+
+            if (reciterSelect) reciterSelect.value = rec.server;
+            currentReciterServer = rec.server;
+            document.getElementById('nowPlayingReciter').innerText = rec.name;
+            showToast("تم اختيار " + rec.name, "📖");
+            if (isQuranPlaying) playCurrentSurah();
+        }
+
+        function onReciterChanged() {
+            if (!reciterSelect) return;
+            currentReciterServer = reciterSelect.value;
+            const recName = reciterSelect.options[reciterSelect.selectedIndex].text;
+            document.getElementById('nowPlayingReciter').innerText = recName;
+            showToast("تم اختيار " + recName, "📖");
+            if (isQuranPlaying) playCurrentSurah();
+        }
+
+        function onSurahChanged() {
+            if (!surahSelect) return;
+            const sNum = surahSelect.value;
+            const sTitle = "سورة " + surahsList[sNum - 1];
+            document.getElementById('nowPlayingSurah').innerText = sTitle;
+            showToast("تم اختيار " + sTitle, "۞");
+            if (isQuranPlaying) playCurrentSurah();
+        }
+
+        function playCurrentSurah() {
+            pauseRadio();
+            const sNum = String(surahSelect ? surahSelect.value : 1).padStart(3, '0');
+            let serverUrl = currentReciterServer;
+            if (!serverUrl.endsWith('/')) serverUrl += '/';
+
+            quranPlayer.src = serverUrl + sNum + ".mp3";
+            quranPlayer.play().then(() => {
+                isQuranPlaying = true;
+                document.getElementById('quranPlayBtn').innerText = "⏸";
+                document.getElementById('audioVizBars').classList.add('active');
+            }).catch(e => {});
+        }
+
+        function toggleQuranPlay() {
+            unlockAudioSystem();
+            if (isQuranPlaying) {
+                quranPlayer.pause();
+                isQuranPlaying = false;
+                document.getElementById('quranPlayBtn').innerText = "▶";
+                document.getElementById('audioVizBars').classList.remove('active');
+            } else {
+                playCurrentSurah();
+            }
+        }
+
+        function pauseQuran() {
+            if (isQuranPlaying) {
+                quranPlayer.pause();
+                isQuranPlaying = false;
+                document.getElementById('quranPlayBtn').innerText = "▶";
+                document.getElementById('audioVizBars').classList.remove('active');
+            }
+        }
+
+        function pauseRadio() {
+            if (currentRadioPlaying) {
+                radioPlayer.pause();
+                currentRadioPlaying = null;
+                updateRadioCardUI();
+            }
+        }
+
+        function nextSurah() {
+            if (!surahSelect) return;
+            let nextVal = parseInt(surahSelect.value) + 1;
+            if (nextVal > 114) nextVal = 1;
+            surahSelect.value = nextVal;
+            onSurahChanged();
+            playCurrentSurah();
+        }
+
+        function prevSurah() {
+            if (!surahSelect) return;
+            let prevVal = parseInt(surahSelect.value) - 1;
+            if (prevVal < 1) prevVal = 114;
+            surahSelect.value = prevVal;
+            onSurahChanged();
+            playCurrentSurah();
+        }
+
+        function toggleRepeat() {
+            isRepeatActive = !isRepeatActive;
+            const btn = document.getElementById('repeatToggleBtn');
+            if (isRepeatActive) {
+                if (btn) {
+                    btn.classList.add('active');
+                    btn.innerText = "تكرار مفعل 🔁";
+                }
+                showToast("تم تفعيل تكرار السورة تلقائياً", "🔁");
+            } else {
+                if (btn) {
+                    btn.classList.remove('active');
+                    btn.innerText = "تكرار 🔁";
+                }
+                showToast("تم إيقاف تكرار السورة", "🔁");
+            }
+        }
+
+        if (quranPlayer) {
+            quranPlayer.addEventListener('ended', () => {
+                if (isRepeatActive) playCurrentSurah();
+                else nextSurah();
+            });
+        }
+
+        const seekBar = document.getElementById('playerSeekBar');
+        const currentTimeLabel = document.getElementById('currentTimeLabel');
+        const totalDurationLabel = document.getElementById('totalDurationLabel');
+
+        function formatDuration(sec) {
+            if (isNaN(sec) || !isFinite(sec)) return "00:00";
+            const m = Math.floor(sec / 60);
+            const s = Math.floor(sec % 60);
+            return String(m).padStart(2, '0') + ":" + String(s).padStart(2, '0');
+        }
+
+        if (quranPlayer) {
+            quranPlayer.addEventListener('timeupdate', () => {
+                if (!isNaN(quranPlayer.duration)) {
+                    const pct = (quranPlayer.currentTime / quranPlayer.duration) * 100;
+                    if (seekBar) seekBar.value = pct;
+                    if (currentTimeLabel) currentTimeLabel.innerText = formatDuration(quranPlayer.currentTime);
+                    if (totalDurationLabel) totalDurationLabel.innerText = formatDuration(quranPlayer.duration);
+                }
+            });
+        }
+
+        function onSeekInput() {
+            if (quranPlayer && !isNaN(quranPlayer.duration) && seekBar) {
+                quranPlayer.currentTime = (seekBar.value / 100) * quranPlayer.duration;
+            }
+        }
+
+        // ======================== 10. MODAL SUITE TABS & TOGGLES ========================
+        function openQuranSuite(tabName) {
+            unlockAudioSystem();
+            const modal = document.getElementById('quranSuiteModal');
+            if (modal) {
+                modal.style.display = 'flex';
+                switchSuiteTab(tabName);
+                // Auto focus first interactive button in active tab for remote
+                setTimeout(() => {
+                    const activeTabBtn = document.getElementById("tabBtn" + tabName.charAt(0).toUpperCase() + tabName.slice(1));
+                    if (activeTabBtn) activeTabBtn.focus();
+                }, 50);
+            }
+        }
+
+        function closeQuranSuite() {
+            const modal = document.getElementById('quranSuiteModal');
+            if (modal) modal.style.display = 'none';
+            // Return focus to footer
+            const btn = document.getElementById('btnFooterSettings');
+            if (btn) btn.focus();
+        }
+
+        function switchSuiteTab(tabKey) {
+            ['radios', 'reciters', 'settings'].forEach(k => {
+                const stage = document.getElementById("stage" + k.charAt(0).toUpperCase() + k.slice(1));
+                const tab = document.getElementById("tabBtn" + k.charAt(0).toUpperCase() + k.slice(1));
+                if (k === tabKey) {
+                    if (stage) stage.style.display = (k === 'radios' ? 'grid' : (k === 'settings' ? 'flex' : 'flex'));
+                    if (tab) tab.classList.add('active');
+                } else {
+                    if (stage) stage.style.display = 'none';
+                    if (tab) tab.classList.remove('active');
+                }
+            });
+        }
+
+        // ======================== 11. INTERACTIVE THEME SELECTION ========================
+        let currentTheme = "winter";
+
+        function applyTheme(themeKey) {
+            currentTheme = themeKey;
+            ['Winter', 'Kaaba', 'Midnight'].forEach(t => {
+                const card = document.getElementById("cardTheme" + t);
+                const tag = document.getElementById("tagTheme" + t);
+                if (card && tag) {
+                    if (t.toLowerCase() === themeKey.toLowerCase()) {
+                        card.classList.add('active-theme');
+                        tag.innerText = "✔ مفعّل الآن";
+                    } else {
+                        card.classList.remove('active-theme');
+                        tag.innerText = "اضغط للتفعيل";
+                    }
+                }
+            });
+
+            document.body.className = (themeKey === 'kaaba' ? 'theme-kaaba' : (themeKey === 'midnight' ? 'theme-midnight' : ''));
+            isSnowActive = (themeKey === 'winter');
+            if (isSnowActive) {
+                renderSnow();
+            } else {
+                if (ctx && width && height) ctx.clearRect(0, 0, width, height);
+            }
+
+            safeStorage.set('pref_theme', themeKey);
+            const themeNames = { winter: "الشتوي الجليدي ❄️", kaaba: "الملكي الذهبي (كسوة الكعبة) 🕋", midnight: "السكينة والليل الهادئ 🌙" };
+            showToast("تم تفعيل الثيم " + (themeNames[themeKey] || "") + " بنجاح", "🎨");
+        }
+
+        // ======================== 12. INTERACTIVE MOAZZIN SELECTION ========================
+        let selectedMoazzin = "makkah";
+
+        const MOAZZIN_AUDIO_MAP = {
+            makkah: "https://server8.mp3quran.net/athan/01.mp3",
+            madinah: "https://server8.mp3quran.net/athan/02.mp3",
+            abdulbasit: "https://server8.mp3quran.net/athan/05.mp3",
+            alafasy: "https://server8.mp3quran.net/athan/04.mp3"
+        };
+
+        const MOAZZIN_NAMES = {
+            makkah: "أذان الحرم المكي الشريف",
+            madinah: "أذان المسجد النبوي الشريف",
+            abdulbasit: "أذان الشيخ عبد الباسط",
+            alafasy: "أذان الشيخ مشاري العفاسي"
+        };
+
+        function applyMoazzin(mKey) {
+            selectedMoazzin = mKey;
+            ['Makkah', 'Madinah', 'Abdulbasit', 'Alafasy'].forEach(k => {
+                const card = document.getElementById("cardMoazzin" + k);
+                if (card) {
+                    if (k.toLowerCase() === mKey.toLowerCase()) card.classList.add('active-moazzin');
+                    else card.classList.remove('active-moazzin');
+                }
+            });
+
+            safeStorage.set('pref_moazzin', mKey);
+            showToast("تم اختيار " + MOAZZIN_NAMES[mKey] + " بنجاح", "🎙️");
+        }
+
+        function testPlayMoazzin(mKey) {
+            unlockAudioSystem();
+            pauseQuran();
+            pauseRadio();
+            applyMoazzin(mKey);
+
+            const azanUrl = MOAZZIN_AUDIO_MAP[mKey] || MOAZZIN_AUDIO_MAP.makkah;
+            azanPlayer.src = azanUrl;
+            azanPlayer.play().then(() => {
+                showToast("جاري تجربة " + MOAZZIN_NAMES[mKey] + " 🔊", "🔊");
+            }).catch(e => {
+                showToast("اضغط مرة أخرى بعد تفعيل صوت الشاشة", "🔊");
+            });
+        }
+
+        // ======================== 13. SMART FEATURES TOGGLES ========================
+        let isPreAzanEnabled = true;
+        let isAutoDimEnabled = true;
+
+        function toggleSmartFeature(featureKey) {
+            if (featureKey === 'pre_azan') {
+                isPreAzanEnabled = !isPreAzanEnabled;
+                const btn = document.getElementById('btnTogglePreAzan');
+                if (btn) {
+                    btn.className = isPreAzanEnabled ? "toggle-status-btn" : "toggle-status-btn disabled";
+                    btn.innerText = isPreAzanEnabled ? "مفعل ✅" : "معطل ❌";
+                }
+                safeStorage.set('pref_pre_azan', isPreAzanEnabled);
+                showToast(isPreAzanEnabled ? "تم تفعيل تنبيه الاستعداد للوضوء" : "تم تعطيل تنبيه الوضوء", "⏳");
+            } else if (featureKey === 'auto_dim') {
+                isAutoDimEnabled = !isAutoDimEnabled;
+                const btn = document.getElementById('btnToggleAutoDim');
+                if (btn) {
+                    btn.className = isAutoDimEnabled ? "toggle-status-btn" : "toggle-status-btn disabled";
+                    btn.innerText = isAutoDimEnabled ? "مفعل ✅" : "معطل ❌";
+                }
+                safeStorage.set('pref_auto_dim', isAutoDimEnabled);
+                showToast(isAutoDimEnabled ? "تم تفعيل التعتيم الليلي التلقائي" : "تم تعطيل التعتيم الليلي", "🌙");
+            }
+        }
+
+        // ======================== 14. SMART NIGHT DIMMING ========================
+        let isNightDimmed = false;
+        function checkAutoNightDim(now) {
+            if (!isAutoDimEnabled) return;
+
+            const h = now.getHours();
+            const m = now.getMinutes();
+            const shouldDim = (h === 23 && m >= 30) || (h < 4) || (h === 4 && m < 30);
+            if (shouldDim && !isNightDimmed) {
+                document.body.classList.add('night-dimmed');
+                isNightDimmed = true;
+                const icon = document.getElementById('dimIcon');
+                if (icon) icon.innerText = "☀️";
+            } else if (!shouldDim && isNightDimmed) {
+                document.body.classList.remove('night-dimmed');
+                isNightDimmed = false;
+                const icon = document.getElementById('dimIcon');
+                if (icon) icon.innerText = "🌙";
+            }
+        }
+
+        function toggleNightDim() {
+            isNightDimmed = !isNightDimmed;
+            const icon = document.getElementById('dimIcon');
+            if (isNightDimmed) {
+                document.body.classList.add('night-dimmed');
+                if (icon) icon.innerText = "☀️";
+                showToast("تم تفعيل وضع السكون الليلي", "🌙");
+            } else {
+                document.body.classList.remove('night-dimmed');
+                if (icon) icon.innerText = "🌙";
+                showToast("تم إيقاف وضع السكون الليلي", "☀️");
+            }
+        }
+
+        // ======================== 15. AZAN & IQAMAH TRIGGER ENGINE ========================
+        const azanPlayer = document.getElementById('azanAudioPlayer');
+        let iqamaTimerInterval = null;
+
+        function triggerAzan(prayerKey) {
+            pauseQuran();
+            pauseRadio();
+            closeQuranSuite();
+
+            document.getElementById('azanModalTarget').innerText = PRAYER_NAMES_AR[prayerKey];
+            document.getElementById('azanScreen').style.display = 'flex';
+
+            const isFajr = (prayerKey === 'fajr');
+            const azanUrl = isFajr ? "https://server8.mp3quran.net/athan/03.mp3" : (MOAZZIN_AUDIO_MAP[selectedMoazzin] || MOAZZIN_AUDIO_MAP.makkah);
+
+            if (azanPlayer) {
+                azanPlayer.src = azanUrl;
+                azanPlayer.play().catch(e => {});
+            }
+
+            startIqamaCountdown(15 * 60);
+        }
+
+        function startIqamaCountdown(durationSec) {
+            if (iqamaTimerInterval) clearInterval(iqamaTimerInterval);
+            let remaining = durationSec;
+
+            function tick() {
+                const m = Math.floor(remaining / 60);
+                const s = remaining % 60;
+                const disp = document.getElementById('iqamaDisplay');
+                if (disp) {
+                    disp.innerText = String(m).padStart(2,'0') + ":" + String(s).padStart(2,'0');
+                }
+                if (remaining <= 0) {
+                    clearInterval(iqamaTimerInterval);
+                    if (disp) disp.innerText = "أُقِيمَتِ الصَّلَاةُ";
+                }
+                remaining--;
+            }
+            tick();
+            iqamaTimerInterval = setInterval(tick, 1000);
+        }
+
+        function closeAzanScreen() {
+            const azan = document.getElementById('azanScreen');
+            if (azan) azan.style.display = 'none';
+            if (azanPlayer) azanPlayer.pause();
+            if (iqamaTimerInterval) clearInterval(iqamaTimerInterval);
+        }
+
+        // ======================== 16. AUDIO CONTEXT UNLOCK & FULLSCREEN ========================
+        let isAudioUnlocked = false;
+        function unlockAudioSystem() {
+            if (isAudioUnlocked) return;
+            isAudioUnlocked = true;
+            try {
+                const ctxAudio = new (window.AudioContext || window.webkitAudioContext)();
+                if (ctxAudio.state === 'suspended') ctxAudio.resume();
+            } catch (e) {}
+        }
+        window.addEventListener('click', unlockAudioSystem, { once: true });
+        window.addEventListener('keydown', unlockAudioSystem, { once: true });
+
+        function toggleFullScreen() {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen().then(() => {
+                    showToast("تم تفعيل وضع ملء الشاشة بنجاح", "⛶");
+                }).catch(() => {});
+            } else {
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                    showToast("تم الخروج من ملء الشاشة", "⛶");
+                }
+            }
+        }
+
+        // Support ALL Smart TV Back keys (VIDAA, Tizen, WebOS, Android TV)
+        window.addEventListener('keydown', (e) => {
+            const isBack = e.key === 'Escape' || e.key === 'Back' || e.key === 'BrowserBack' || e.key === 'GoBack' ||
+                           e.keyCode === 8 || e.keyCode === 27 || e.keyCode === 461 || e.keyCode === 10009 || e.keyCode === 166;
+            if (isBack) {
+                const modal = document.getElementById('quranSuiteModal');
+                const azan = document.getElementById('azanScreen');
+                if (modal && modal.style.display === 'flex') {
+                    closeQuranSuite();
+                    e.preventDefault();
+                } else if (azan && azan.style.display === 'flex') {
+                    closeAzanScreen();
+                    e.preventDefault();
+                }
+            }
+        });
+
+        // STRICT SCROLL LOCK: Prevent any spatial remote scroll
+        window.addEventListener('scroll', () => window.scrollTo(0, 0), { passive: false });
+
+        // ======================== 17. LOAD PREFERENCES AT VERY END (SAFELY) ========================
+        function loadPreferences() {
+            const m = safeStorage.get('pref_moazzin', 'makkah');
+            applyMoazzin(m);
+
+            const t = safeStorage.get('pref_theme', 'winter');
+            applyTheme(t);
+
+            const pa = safeStorage.get('pref_pre_azan', 'true');
+            isPreAzanEnabled = (pa === 'true');
+            const btnPA = document.getElementById('btnTogglePreAzan');
+            if (btnPA) {
+                btnPA.className = isPreAzanEnabled ? "toggle-status-btn" : "toggle-status-btn disabled";
+                btnPA.innerText = isPreAzanEnabled ? "مفعل ✅" : "معطل ❌";
+            }
+
+            const ad = safeStorage.get('pref_auto_dim', 'true');
+            isAutoDimEnabled = (ad === 'true');
+            const btnAD = document.getElementById('btnToggleAutoDim');
+            if (btnAD) {
+                btnAD.className = isAutoDimEnabled ? "toggle-status-btn" : "toggle-status-btn disabled";
+                btnAD.innerText = isAutoDimEnabled ? "مفعل ✅" : "معطل ❌";
+            }
+        }
+        loadPreferences();
+</script>
+</body>
+</html>
