@@ -2407,7 +2407,7 @@
     <audio id="azanAudioPlayer" preload="auto">
         <source src="https://raw.githubusercontent.com/Kiwifu/adhan-mp3/master/Ali_Ibn_Ahmad_Mala_-_HQ_(%D8%B9%D9%84%D9%8A_%D8%A8%D9%86_%D8%A3%D8%AD%D9%85%D8%AF_%D9%85%D9%84%D8%A7).mp3" type="audio/mpeg">
     </audio>
-    <audio id="salawatAudioPlayer" preload="auto"></audio>
+    <audio id="salawatAudioPlayer" preload="auto" src="./salawat.mp3"></audio>
     <audio id="athkarAudioPlayer" preload="auto"></audio>
     <audio id="quranAudioPlayer" preload="none"></audio>
     <audio id="radioAudioPlayer" preload="none"></audio>
@@ -3344,53 +3344,142 @@
             }
         }
 
+        let salawatActive = false;
+        let salawatResumeTimer = null;
+
+        function stopSalawatImmediately() {
+            salawatActive = false;
+            if (salawatResumeTimer) {
+                clearTimeout(salawatResumeTimer);
+                salawatResumeTimer = null;
+            }
+            const salPlayer = document.getElementById('salawatAudioPlayer');
+            if (salPlayer) {
+                try {
+                    salPlayer.pause();
+                    salPlayer.currentTime = 0;
+                } catch(e) {}
+            }
+            const overlay = document.getElementById('salawatToastOverlay');
+            if (overlay) overlay.classList.remove('show');
+        }
+
         function playSalawatVoice(isTest = false) {
+            if (salawatActive) return;
+            salawatActive = true;
+
             unlockAudioSystem();
             const overlay = document.getElementById('salawatToastOverlay');
             if (overlay) {
                 overlay.classList.add('show');
-                setTimeout(() => {
-                    overlay.classList.remove('show');
-                }, 8000);
             }
 
+            // 1. Detect active media state
+            const wasRadioPlaying = (!radioPlayer.paused && currentRadioPlaying);
+            const savedRadioStation = currentRadioPlaying;
+            const wasQuranPlaying = (isQuranPlaying && !quranPlayer.paused);
+            const savedQuranTime = (quranPlayer ? quranPlayer.currentTime : 0);
+
+            // 2. Pause background media to dedicate TV hardware audio decoder to Salawat
+            if (wasRadioPlaying) {
+                radioPlayer.pause();
+            }
+            if (wasQuranPlaying) {
+                quranPlayer.pause();
+            }
+
+            // 3. Guaranteed single-execution resume function
+            let hasResumed = false;
+            function finishSalawatAndResume() {
+                if (hasResumed) return;
+                hasResumed = true;
+                salawatActive = false;
+                if (salawatResumeTimer) {
+                    clearTimeout(salawatResumeTimer);
+                    salawatResumeTimer = null;
+                }
+
+                if (overlay) overlay.classList.remove('show');
+
+                // Smoothly resume background playback
+                if (wasQuranPlaying && quranPlayer) {
+                    try {
+                        quranPlayer.currentTime = savedQuranTime;
+                        const p = quranPlayer.play();
+                        if (p) {
+                            p.then(() => {
+                                isQuranPlaying = true;
+                                const btn = document.getElementById('quranPlayBtn');
+                                if (btn) btn.innerText = "⏸";
+                                const viz = document.getElementById('audioVizBars');
+                                if (viz) viz.classList.add('active');
+                            }).catch(() => {});
+                        }
+                    } catch (e) {}
+                } else if (wasRadioPlaying && radioPlayer && savedRadioStation) {
+                    try {
+                        const streamUrl = RADIO_STREAMS[savedRadioStation];
+                        if (streamUrl) radioPlayer.src = streamUrl;
+                        const p = radioPlayer.play();
+                        if (p) {
+                            p.then(() => {
+                                currentRadioPlaying = savedRadioStation;
+                                updateRadioCardUI();
+                            }).catch(() => {});
+                        }
+                    } catch (e) {}
+                }
+            }
+
+            // 4. Maximum failsafe timer: restore previous playback within 6.5s no matter what
+            salawatResumeTimer = setTimeout(finishSalawatAndResume, 6500);
+
+            // 5. Play Salawat Audio with multi-source fallback
             const salawatPlayer = document.getElementById('salawatAudioPlayer');
-            if (!salawatPlayer) return;
+            if (!salawatPlayer) {
+                finishSalawatAndResume();
+                return;
+            }
 
-            const radioPlayer = document.getElementById('radioAudioPlayer');
-            const quranPlayer = document.getElementById('quranAudioPlayer');
-            let prevRadioVol = radioPlayer ? radioPlayer.volume : 1;
-            let prevQuranVol = quranPlayer ? quranPlayer.volume : 1;
-
-            // Duck background audio gently
-            if (radioPlayer && !radioPlayer.paused) radioPlayer.volume = 0.15;
-            if (quranPlayer && !quranPlayer.paused) quranPlayer.volume = 0.15;
-
-            // Ensure player is ready and unmuted
             salawatPlayer.muted = false;
             salawatPlayer.volume = 1.0;
 
-            if (!salawatPlayer.src || salawatPlayer.src.includes('archive.org') || salawatPlayer.src === window.location.href) {
-                salawatPlayer.src = SALAWAT_EMBEDDED_AUDIO;
+            const sources = [
+                './salawat.mp3',
+                'https://ahmedyasser012-code.github.io/quran/salawat.mp3',
+                'https://raw.githubusercontent.com/rn0x/altaqwaa-android/main/src/resources/audio/%D8%A3%D8%B0%D9%83%D8%A7%D8%B1/%D8%B5%D9%84%D9%8A_%D8%B9%D9%84%D9%8A_%D9%85%D8%AD%D9%85%D8%AF.mp3',
+                SALAWAT_EMBEDDED_AUDIO
+            ];
+
+            let srcIndex = 0;
+            function tryNextAudioSource() {
+                if (hasResumed) return;
+                if (srcIndex >= sources.length) {
+                    finishSalawatAndResume();
+                    return;
+                }
+                const nextSrc = sources[srcIndex++];
+                try {
+                    salawatPlayer.src = nextSrc;
+                    salawatPlayer.currentTime = 0;
+                    const playPromise = salawatPlayer.play();
+                    if (playPromise !== undefined) {
+                        playPromise.catch(err => {
+                            console.warn('[Salawat] Playback error on source:', nextSrc, err);
+                            tryNextAudioSource();
+                        });
+                    }
+                } catch (e) {
+                    tryNextAudioSource();
+                }
             }
 
-            salawatPlayer.currentTime = 0;
-
-            salawatPlayer.onended = function() {
-                if (radioPlayer && !radioPlayer.paused) radioPlayer.volume = prevRadioVol;
-                if (quranPlayer && !quranPlayer.paused) quranPlayer.volume = prevQuranVol;
+            salawatPlayer.onended = finishSalawatAndResume;
+            salawatPlayer.onerror = function() {
+                tryNextAudioSource();
             };
 
-            const playPromise = salawatPlayer.play();
-            if (playPromise !== undefined) {
-                playPromise.catch(e => {
-                    console.warn('[Salawat] Play retry with direct data URI:', e);
-                    salawatPlayer.src = SALAWAT_EMBEDDED_AUDIO;
-                    salawatPlayer.play().catch(err => {
-                        console.error('[Salawat] Final play error:', err);
-                    });
-                });
-            }
+            tryNextAudioSource();
 
             if (isTest) {
                 showToast("ﷺ اللَّهُمَّ صَلِّ وَسَلِّمْ عَلَى نَبِيِّنَا مُحَمَّدٍ", "🕊️");
@@ -3405,6 +3494,10 @@
             if (salawatIntervalMinutes === 0) return;
             const azanScreen = document.getElementById('azanScreen');
             if (azanScreen && azanScreen.style.display === 'flex') return;
+
+            // Do not interrupt morning or evening athkar session
+            if (typeof activeAthkarType !== 'undefined' && activeAthkarType) return;
+            if (salawatActive) return;
 
             const m = now.getMinutes();
             const s = now.getSeconds();
@@ -3506,6 +3599,7 @@
         let iqamaTimerInterval = null;
 
         function triggerAzan(prayerKey) {
+            stopSalawatImmediately();
             pauseQuran();
             pauseRadio();
             closeQuranSuite();
@@ -3561,26 +3655,6 @@
                 const ctxAudio = new (window.AudioContext || window.webkitAudioContext)();
                 if (ctxAudio.state === 'suspended') ctxAudio.resume();
             } catch (e) {}
-
-            // Prime salawat player silently on first user interaction for Smart TVs
-            const salawatPlayer = document.getElementById('salawatAudioPlayer');
-            if (salawatPlayer) {
-                try {
-                    salawatPlayer.muted = true;
-                    const p = salawatPlayer.play();
-                    if (p) {
-                        p.then(() => {
-                            salawatPlayer.pause();
-                            salawatPlayer.currentTime = 0;
-                            salawatPlayer.muted = false;
-                        }).catch(() => {
-                            salawatPlayer.muted = false;
-                        });
-                    }
-                } catch (e) {
-                    salawatPlayer.muted = false;
-                }
-            }
         }
         window.addEventListener('click', unlockAudioSystem, { once: true });
         window.addEventListener('keydown', unlockAudioSystem, { once: true });
@@ -3745,6 +3819,7 @@
         }
 
         function triggerAthkarSession(type, isManual = false) {
+            stopSalawatImmediately();
             unlockAudioSystem();
             pauseQuran();
             pauseRadio();

@@ -1,10 +1,11 @@
 // Service Worker for Cairo Quran & Prayer Display
 // Provides complete offline caching for Smart TVs and web browsers
 
-const CACHE_NAME = 'cairo-quran-tv-v2';
+const CACHE_NAME = 'cairo-quran-tv-v3';
 const STATIC_ASSETS = [
     './',
     './index.html',
+    './salawat.mp3',
     'https://fonts.googleapis.com/css2?family=Almarai:wght@300;400;700;800&family=Amiri:ital,wght@0,400;0,700;1,400&family=Readex+Pro:wght@400;500;600;700;800&family=Tajawal:wght@400;500;700;900&display=swap'
 ];
 
@@ -37,9 +38,10 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
     const reqUrl = event.request.url;
 
-    // Do NOT intercept live radio streams, large audio files, or live API calls
+    // Do NOT intercept live radio streams, large audio files (masaa/sabah), or live API calls
     if (
-        reqUrl.includes('.mp3') ||
+        reqUrl.includes('masaa.mp3') ||
+        reqUrl.includes('sabah.mp3') ||
         reqUrl.includes('stream') ||
         reqUrl.includes('radio') ||
         reqUrl.includes('api.aladhan.com') ||
